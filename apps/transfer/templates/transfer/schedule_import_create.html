@@ -1,0 +1,107 @@
+{% extends '_base_create_update.html' %}
+{% load static %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load asset_tags %}
+{% load common_tags %}
+
+{% block form %}
+    <form action="" method="post" class="form-horizontal">
+    {% if form.non_field_errors %}
+         <div class="alert alert-danger">
+             {{ form.non_field_errors }}
+         </div>
+    {% endif %}
+    {% csrf_token %}
+    <h3>{% trans 'Basic' %}</h3>
+    {% bootstrap_field form.task layout="horizontal" %}
+    {% bootstrap_field form.type layout="horizontal" %}
+{#    <div class="row">#}
+{#        <div class="col-lg-5">#}
+{#            {% bootstrap_field form.database layout="horizontal" %}#}
+{#        </div>#}
+{#        <div class="col-lg-7">#}
+{#            {% bootstrap_field form.tables layout="horizontal" %}#}
+{#        </div>#}
+{#    </div>#}
+    {% bootstrap_field form.database layout="horizontal" %}
+    {% bootstrap_field form.tables layout="horizontal" %}
+    <div class="hr-line-dashed"></div>
+    <h3>{% trans 'Other' %}</h3>
+    {% bootstrap_field form.name layout="horizontal" %}
+    {% bootstrap_field form.run_time layout="horizontal" %}
+{#    {% bootstrap_field form.COMMENT layout="horizontal" %}#}
+
+    <div class="hr-line-dashed"></div>
+    <div class="form-group">
+        <div class="col-sm-4 col-sm-offset-2">
+            <button class="btn btn-default" type="reset"> {% trans 'Reset' %}</button>
+            <button id="submit_button" class="btn btn-primary" type="submit">{% trans 'Submit' %}</button>
+        </div>
+    </div>
+    </form>
+{% endblock %}
+
+{% block custom_foot_js %}
+<script>
+    $(document).ready(function () {
+        $('.select2').select2();
+     }).on('click', '.field-tag', function() {
+        changeField(this);
+     }).on('click', '#change_all', function () {
+        var tag_fields = $('.field-tag');
+        var $this = $(this);
+        var active = '1';
+        if ($this.attr('value') == '0'){
+            active = '0';
+            $this.attr('value', '1').addClass('label-primary')
+        } else {
+            active = '1';
+            $this.attr('value', '0').removeClass('label-primary')
+        }
+        $.each(tag_fields, function (k, v) {
+            changeField(v, active)
+        })
+     });
+
+    function changeField(obj, active) {
+        var $this = $(obj);
+        var field_id = $this.data('id');
+        if (!active) {
+            active = $this.attr('value');
+        }
+        if (active == '0') {
+            $this.attr('value', '1').addClass('label-primary');
+            var form_groups = $('#add_form .form-group:not(.abc)');
+            form_groups.filter(':has(#'  + field_id + ')').show().find('select,input').prop('disabled', false)
+        } else {
+            $this.attr('value', '0').removeClass('label-primary');
+            var form_groups = $('#add_form .form-group:not(.abc)');
+            form_groups.filter(':has(#'  + field_id + ')').hide().find('select,input').prop('disabled', true)
+        }
+     }
+
+    $('select:first').change(function(){
+        var database_id=$(this).children('option:selected').val();
+        $.ajax({
+            url: "{% url 'api-transfer:table-list' %}" + '?database=' + database_id,
+            method: 'GET',
+            data: {},
+            dataType: "json",
+            success: function (data, textStatus) {
+                var options_html='';
+                for (var i in data){
+                    options_html += '<option value="'+data[i].id+'">'+data[i].name+'</option>'
+                 }
+                $('#id_tables').html(options_html);
+                {#console.log(data)#}
+            },
+            error: function () {
+                toastr.error('Table not found');
+            }
+        });
+        console.log(database_id)
+    });
+
+</script>
+{% endblock %}

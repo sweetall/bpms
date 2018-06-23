@@ -1,0 +1,45 @@
+{% load static %}
+{% load i18n %}
+<li class="nav-header">
+    <div class="dropdown profile-element">
+{#        <a href="{% url 'index' %}" target="_self">#}
+{#            <img alt="logo" height="55" width="185" src="/bpms/static/img/logo-text.png" style="margin-left: 20px"/>#}
+{#            <img alt="logo" height="55" width="55" src="/bpms/static/img/logo.png" style="margin-left: 20px"/>#}
+{#            <span><big>大数据管理平台</big></span>#}
+{#        </a>#}
+
+        <a class="navbar-brand text-muted" href="{% url 'index' %}">
+            <!-- Logo icon -->
+            <b>BPMS</b>
+            <span><small>大数据管理平台</small>
+            </span>
+        </a>
+
+    </div>
+    <div class="clearfix"></div>
+    <div class="logo-element">
+        <b>BPMS</b>
+{#        <img alt="image" height="40" src="/bpms/static/img/logo.png"/>#}
+    </div>
+
+</li>
+<script>
+$(document).ready(function () {
+})
+.on('click', '#switch_admin', function () {
+    var cookieName = "IN_ADMIN_PAGE";
+    setTimeout(function () {
+        delCookie(cookieName);
+        setCookie(cookieName, "Yes");
+        window.location = "{% url 'index' %}"
+    }, 100)
+})
+.on('click', '#switch_user', function () {
+    var cookieName = "IN_ADMIN_PAGE";
+    setTimeout(function () {
+        delCookie(cookieName);
+        setCookie(cookieName, "No");
+        window.location = "{% url 'assets:user-asset-list' %}"
+    }, 100);
+})
+</script>
