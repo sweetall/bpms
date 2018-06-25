@@ -15,17 +15,16 @@ def create_or_update_schedule_task(task):
     """
     :param task: {
         'name': '定时任务001',
-        'task': 'tasks.add' # A registered celery task,
+        'task': 'tasks.add', # A registered celery task,
         'crontab': "30 7 * * *",
         'args': (16, 16),
         'kwargs': {},
         'enabled': False,
-        'schedule: {
-            'style': 1,
+        'schedule': {
+            'type': 1,
             'comment': '',
             'user': User,
         }
-
     }
     :return:
     """
@@ -61,7 +60,7 @@ def create_or_update_schedule_task(task):
     )
     schedule_defaults = dict(
         periodic=periodic_task,
-        style=task['schedule'].get('style', 1),
+        type=task['schedule'].get('type', 1),
         comment=task['schedule'].get('comment', '')
     )
     schedule, _created = Schedule.objects.update_or_create(

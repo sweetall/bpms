@@ -11,13 +11,13 @@ from common.mixins import UserMixin, DateMixin
 
 # add start
 class Schedule(UserMixin, DateMixin):
-    STYLE_CHOICES = (
+    TYPE_CHOICES = (
         (1, '数据导出'),
         (2, '数据导入'),
     )
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     periodic = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, verbose_name='任务')
-    style = models.IntegerField(choices=STYLE_CHOICES, verbose_name='类型')
+    type = models.IntegerField(choices=TYPE_CHOICES, verbose_name='类型')
     comment = models.TextField(max_length=200, verbose_name='备注')
 
     class Meta:

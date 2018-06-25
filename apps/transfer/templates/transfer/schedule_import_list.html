@@ -4,39 +4,40 @@
 {% endblock %}
 {% block table_container %}
 <div class="uc pull-left m-r-5"><a href="{% url "transfer:schedule-import-create" %}" class="btn btn-sm btn-primary"> {% trans "Create import schedule" %} </a></div>
-<table class="table table-striped table-bordered table-hover " id="table_list_table" >
+<table class="table table-striped table-bordered table-hover " id="schedule_list_table" >
     <thead>
         <tr>
-            <th class="text-center">
-                <input id="" type="checkbox" class="ipt_check_all">
-            </th>
+{#            <th class="text-center">#}
+{#                <input id="" type="checkbox" class="ipt_check_all">#}
+{#            </th>#}
             <th class="text-center">任务名 </th>
             <th class="text-center">类型</th>
             <th class="text-center">执行时间</th>
+            <th class="text-center">状态</th>
             <th class="text-center">创建人</th>
             <th class="text-center">创建时间</th>
             <th class="text-center">备注</th>
+            <th class="text-center">操作</th>
         </tr>
     </thead>
     <tbody>
     </tbody>
 </table>
-<div id="actions" class="hide">
-    <div class="input-group">
-        <select class="form-control m-b" style="width: auto" id="slct_bulk_update">
-            <option value="delete">{% trans 'Delete selected' %}</option>
-            <option value="update">{% trans 'Update selected' %}</option>
-            <option value="deactive">取消任务</option>
-            <option value="active">激活任务</option>
-        </select>
-        <div class="input-group-btn pull-left" style="padding-left: 5px;">
-            <button id='btn_bulk_update' style="height: 32px;"  class="btn btn-sm btn-primary">
-             {% trans 'Submit' %}
-            </button>
-        </div>
-    </div>
-</div>
-{#{% include "transfer/_table_import_modal.html" %}#}
+{#<div id="actions" class="hide">#}
+{#    <div class="input-group">#}
+{#        <select class="form-control m-b" style="width: auto" id="slct_bulk_update">#}
+{#            <option value="delete">{% trans 'Delete selected' %}</option>#}
+{#            <option value="update">{% trans 'Update selected' %}</option>#}
+{#            <option value="deactive">取消任务</option>#}
+{#            <option value="active">激活任务</option>#}
+{#        </select>#}
+{#        <div class="input-group-btn pull-left" style="padding-left: 5px;">#}
+{#            <button id='btn_bulk_update' style="height: 32px;"  class="btn btn-sm btn-primary">#}
+{#             {% trans 'Submit' %}#}
+{#            </button>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
 {% endblock %}
 {% block content_bottom_left %}{% endblock %}
 {% block custom_foot_js %}
@@ -45,21 +46,24 @@
 
 function initTable() {
      var options = {
-        ele: $('#table_list_table'),
+        ele: $('#schedule_list_table'),
         columnDefs: [
-            {targets: 1, createdCell: function (td, cellData, rowData) {
-                {#var detail_btn = '<a href="{% url 'transfer:import-schedule-update' tb_id=table_id pk=DEFAULT_PK %}">' + cellData + '</a>';#}
-                {#$(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));#}
+            {targets: 0, createdCell: function (td, cellData, rowData) {
+                var detail_btn = '<a href="{% url 'transfer:schedule-import-update' pk=DEFAULT_PK %}">' + cellData.name + '</a>';
+                $(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));
             }},
-            {targets: 2, createdCell: function (td, cellData, rowData) {
+            {targets: 1, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
+            {targets: 2, createdCell: function (td, cellData) {
+                $(td).html(cellData);
+            }},
             {targets: 3, createdCell: function (td, cellData) {
-                if (!cellData) {
+                if (!cellData.enabled) {
                     $(td).html('<i class="fa fa-times text-danger"></i>')
-                } else {
+                 } else {
                     $(td).html('<i class="fa fa-check text-navy"></i>')
-                }
+                 }
             }},
             {targets: 4, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
@@ -69,17 +73,27 @@ function initTable() {
             }},
             {targets: 6, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
+            }},
+            {targets: 7, createdCell: function (td, cellData, rowData) {
+                $(td).html(
+                    '<div class="btn-group">' +
+                        '<button class="btn btn-success btn-xs" onclick="">激活</button>' +
+                        '<button class="btn btn-danger btn-xs" onclick="">删除</button>' +
+                    '</div>'
+                )
             }}
         ],
-        ajax_url: '{% url "api-ops:schedule-list" %}' + '?style=1',
+        ajax_url: '{% url "api-ops:schedule-list" %}' + '?type=1',
         columns: [
-            {data: "id"},
-            {data: "name"},
-            {data: "type" },
-            {data: "is_sensitive", orderable: false },
-            {data: "modifier"},
-            {data: "modify_time"},
-            {data: "comment", orderable: false}
+            {#{data: "id"},#}
+            {data: "periodic"},
+            {data: "type_info" },
+            {data: "crontab_info" },
+            {data: "periodic" },
+            {data: "creator"},
+            {data: "create_time"},
+            {data: "comment", orderable: false},
+            {data: "id", orderable: false}
         ],
         op_html: $('#actions').html()
     };
@@ -94,105 +108,106 @@ $(document).ready(function(){
         console.log(value)
     });
 
-}).on('click', '#btn_bulk_update', function(){
-    var action = $('#slct_bulk_update').val();
-    var $data_table = $('#table_list_table').DataTable();
-    var id_list = [];
-    var plain_id_list = [];
-    $data_table.rows({selected: true}).every(function(){
-        id_list.push({pk: this.data().id});
-        plain_id_list.push(this.data().id);
-    });
-    if (id_list === []) {
-        return false;
-    }
-    var the_url = "{% url 'api-ops:schedule-list' %}";
-    function doDeactive() {
-        var body = $.each(id_list, function(index, table_object) {
-            table_object['enabled'] = false;
-        });
-        function success() {
-            location.reload();
-        }
-        APIUpdateAttr({
-            url: the_url,
-            method: 'PATCH',
-            body: JSON.stringify(body),
-            success: success
-        });
-        location.reload();
-    }
-    function  doActive() {
-        var body = $.each(id_list, function(index, table_object) {
-            table_object['enabled'] = true;
-        });
-        function success() {
-            location.reload();
-        }
-        APIUpdateAttr({
-            url: the_url,
-            method: 'PATCH',
-            body: JSON.stringify(body),
-            success: success
-        });
-    }
-    function doDelete() {
-        swal({
-            title: "{% trans 'Are you sure?' %}",
-            text: "{% trans 'This will delete the selected items !!!' %}",
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
-            confirmButtonText: "{% trans 'Confirm' %}",
-            closeOnConfirm: false
-        }, function() {
-            var success = function() {
-                var msg = "{% trans 'Item Deleted.' %}";
-                swal("{% trans 'Item Delete' %}", msg, "success");
-                $('#table_list_table').DataTable().ajax.reload();
-            };
-            var fail = function() {
-                var msg = "{% trans 'Deleting failed.' %}";
-                swal("{% trans 'Item Delete' %}", msg, "error");
-            };
-            var url_delete = the_url + '?id__in=' + JSON.stringify(plain_id_list);
-            APIUpdateAttr({
-                url: url_delete,
-                method: 'DELETE',
-                success: success,
-                error: fail
-            });
-            jumpserver.checked = false;
-        });
-    }
-    function doUpdate() {
-        var schedule_id = plain_id_list.join(',');
+});
+{#.on('click', '#btn_bulk_update', function(){#}
+{#    var action = $('#slct_bulk_update').val();#}
+{#    var $data_table = $('#table_list_table').DataTable();#}
+{#    var id_list = [];#}
+{#    var plain_id_list = [];#}
+{#    $data_table.rows({selected: true}).every(function(){#}
+{#        id_list.push({pk: this.data().id});#}
+{#        plain_id_list.push(this.data().id);#}
+{#    });#}
+{#    if (id_list === []) {#}
+{#        return false;#}
+{#    }#}
+{#    var the_url = "{% url 'api-ops:schedule-list' %}";#}
+{#    function doDeactive() {#}
+{#        var body = $.each(id_list, function(index, table_object) {#}
+{#            table_object['enabled'] = false;#}
+{#        });#}
+{#        function success() {#}
+{#            location.reload();#}
+{#        }#}
+{#        APIUpdateAttr({#}
+{#            url: the_url,#}
+{#            method: 'PATCH',#}
+{#            body: JSON.stringify(body),#}
+{#            success: success#}
+{#        });#}
+{#        location.reload();#}
+{#    }#}
+{#    function  doActive() {#}
+{#        var body = $.each(id_list, function(index, table_object) {#}
+{#            table_object['enabled'] = true;#}
+{#        });#}
+{#        function success() {#}
+{#            location.reload();#}
+{#        }#}
+{#        APIUpdateAttr({#}
+{#            url: the_url,#}
+{#            method: 'PATCH',#}
+{#            body: JSON.stringify(body),#}
+{#            success: success#}
+{#        });#}
+{#    }#}
+{#    function doDelete() {#}
+{#        swal({#}
+{#            title: "{% trans 'Are you sure?' %}",#}
+{#            text: "{% trans 'This will delete the selected items !!!' %}",#}
+{#            type: "warning",#}
+{#            showCancelButton: true,#}
+{#            confirmButtonColor: "#DD6B55",#}
+{#            confirmButtonText: "{% trans 'Confirm' %}",#}
+{#            closeOnConfirm: false#}
+{#        }, function() {#}
+{#            var success = function() {#}
+{#                var msg = "{% trans 'Item Deleted.' %}";#}
+{#                swal("{% trans 'Item Delete' %}", msg, "success");#}
+{#                $('#table_list_table').DataTable().ajax.reload();#}
+{#            };#}
+{#            var fail = function() {#}
+{#                var msg = "{% trans 'Deleting failed.' %}";#}
+{#                swal("{% trans 'Item Delete' %}", msg, "error");#}
+{#            };#}
+{#            var url_delete = the_url + '?id__in=' + JSON.stringify(plain_id_list);#}
+{#            APIUpdateAttr({#}
+{#                url: url_delete,#}
+{#                method: 'DELETE',#}
+{#                success: success,#}
+{#                error: fail#}
+{#            });#}
+{#            jumpserver.checked = false;#}
+{#        });#}
+{#    }#}
+{#    function doUpdate() {#}
+{#        var schedule_id = plain_id_list.join(',');#}
         {#var url = "{% url 'transfer:schedule-bulk-update' pk=table_id %}?schedule_id=" + schedule_id;#}
         {#location.href = url#}
-     }
-    switch(action) {
-        case 'deactive':
-            doDeactive();
-            break;
-        case 'delete':
-            doDelete();
-            break;
-        case 'update':
-            doUpdate();
-            break;
-        case 'active':
-            doActive();
-            break;
-        default:
-            break;
-    }
-}).on('click', '.btn_table_delete', function(){
-    var $this = $(this);
-    var name = $this.data('name');
-    var uid = $this.data('uid');
+{#     }#}
+{#    switch(action) {#}
+{#        case 'deactive':#}
+{#            doDeactive();#}
+{#            break;#}
+{#        case 'delete':#}
+{#            doDelete();#}
+{#            break;#}
+{#        case 'update':#}
+{#            doUpdate();#}
+{#            break;#}
+{#        case 'active':#}
+{#            doActive();#}
+{#            break;#}
+{#        default:#}
+{#            break;#}
+{#    }#}
+{# }).on('click', '.btn_table_delete', function(){#}
+{#    var $this = $(this);#}
+{#    var name = $this.data('name');#}
+{#    var uid = $this.data('uid');#}
     {#var the_url = '{% url "api-transfer:schedule-detail" pk=DEFAULT_PK %}'.replace("{{ DEFAULT_PK }}", uid);#}
     {#objectDelete($this, name, the_url);#}
-})
+{# })#}
 </script>
 {% endblock %}
 

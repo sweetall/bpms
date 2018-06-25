@@ -34,7 +34,7 @@
 <script src="{% static 'js/plugins/datetimepicker/bootstrap-datetimepicker.js' %}"></script>
 <script>
     $(document).ready(function () {
-        initTables('{{ DEFAULT_PK }}');
+        initTables('{{ database_id }}');
         $('.select2').select2();
     }).on('click', '.field-tag', function() {
         changeField(this);
@@ -91,7 +91,11 @@
             success: function (data, textStatus) {
                 var options_html='';
                 for (var i in data){
-                    options_html += '<option value="'+data[i].id+'">'+data[i].name+'</option>'
+                    if ('{{ tables }}'.indexOf(data[i].id) !== -1){
+                        options_html += '<option value="'+data[i].id+'" selected>'+data[i].name+'</option>'
+                    } else {
+                        options_html += '<option value="'+data[i].id+'">'+data[i].name+'</option>'
+                    }
                  }
                 $('#id_tables').html(options_html);
                 {#console.log(data)#}

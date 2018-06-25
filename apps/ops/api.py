@@ -93,13 +93,14 @@ class CeleryTaskLogApi(generics.RetrieveAPIView):
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics.GenericAPIView
-    filter_fields = ("periodic", "style")
+    filter_fields = ("periodic", "type")
     search_fields = filter_fields
     ordering_fields = ("create_time", )
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsValidUser,)
+    http_method_names = ('get', )
 
     def get_queryset(self):
         queryset = super().get_queryset()

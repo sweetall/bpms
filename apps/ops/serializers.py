@@ -1,5 +1,6 @@
 # ~*~ coding: utf-8 ~*~
 from __future__ import unicode_literals
+import json
 from rest_framework import serializers
 from django_celery_beat.models import PeriodicTask
 
@@ -20,6 +21,20 @@ class PeriodicTaskSerializer(serializers.ModelSerializer):
 
 class ScheduleSerializer(serializers.ModelSerializer):
     periodic = PeriodicTaskSerializer(read_only=True)
+    crontab_info = serializers.SerializerMethodField()
+    creator = serializers.SerializerMethodField()
+    type_info = serializers.SerializerMethodField()
+
+    def get_crontab_info(self, obj):
+        crontab = obj.periodic.crontab
+        k = json.loads(obj.periodic.kwargs).get('year', '')
+        return k + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + crontab.hour + ':' + crontab.minute
+
+    def get_creator(self, obj):
+        return obj.creator.username
+
+    def get_type_info(self, obj):
+        return obj.TYPE_CHOICES[obj.type-1][-1]
 
     class Meta:
         model = Schedule

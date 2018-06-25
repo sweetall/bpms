@@ -30,5 +30,5 @@ urlpatterns = [
 
     path('schedule/import/', schedule.ImportScheduleListView.as_view(), name='schedule-import-list'),
     path('schedule/import/create/', schedule.ImportScheduleCreateView.as_view(), name='schedule-import-create'),
-    # path('schedule/import/<str:pk>/update/', schedule.ImportScheduleUpdateView.as_view(), name='import-schedule-update')
+    path('schedule/import/<str:pk>/update/', schedule.ImportScheduleUpdateView.as_view(), name='schedule-import-update')
 ]
