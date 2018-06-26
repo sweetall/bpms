@@ -22,10 +22,16 @@ msgid "Transfer"
 msgstr "HIVE导数"
 
 msgid "Transfer in"
-msgstr "新建导入"
+msgstr "导入任务"
+
+msgid "Transfer in create"
+msgstr "新建导入任务"
+
+msgid "Transfer in update"
+msgstr "更新导入任务"
 
 msgid "Transfer out"
-msgstr "新建导出"
+msgstr "导出任务"
 
 msgid "Transfer list"
 msgstr "任务清单"

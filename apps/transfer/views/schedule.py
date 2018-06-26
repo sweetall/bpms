@@ -4,6 +4,7 @@ from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateVi
 from django.shortcuts import reverse, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
+from django.contrib import messages
 import json
 import uuid
 
@@ -18,8 +19,8 @@ class ImportScheduleListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = {
-            'app': _('Ops'),
-            'action': _('Ops Schedule'),
+            'app': _('Transfer'),
+            'action': _('Transfer in'),
         }
         kwargs.update(context)
         return super().get_context_data(**kwargs)
@@ -39,7 +40,7 @@ class ImportScheduleCreateView(SuccessMessageMixin, FormView):
     def get_context_data(self, **kwargs):
         context = {
             'app': _('Transfer'),
-            'action': '新建导入任务',
+            'action': _('Transfer in create'),
             'form': self.get_form_class()
         }
         kwargs.update(context)
@@ -47,6 +48,18 @@ class ImportScheduleCreateView(SuccessMessageMixin, FormView):
 
     def get_success_message(self, cleaned_data):
         return create_success_msg % ({"name": cleaned_data["name"]})
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            messages.error(request, form.errors)
+            return self.form_invalid(form)
 
 
 class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
@@ -80,7 +93,7 @@ class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
 
         context = {
             'app': _('Transfer'),
-            'action': '更新导入任务',
+            'action': _('Transfer in update'),
             'form': form,
             'database_id': database,
             'tables': ' '.join(tables),

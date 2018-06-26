@@ -1,3 +1,4 @@
+import datetime
 from django.views.generic import TemplateView, ListView
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.messages.views import SuccessMessageMixin
@@ -6,7 +7,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import redirect, reverse
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
-import datetime
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from common.utils import get_object_or_none, get_logger, is_uuid
 from common.const import create_success_msg, update_success_msg
@@ -15,7 +16,7 @@ from transfer.models import Database, Table, Field
 from transfer.forms.table import TableCreateForm, TableUpdateForm, TableBulkUpdateForm
 
 
-class TableListView(AdminUserRequiredMixin, TemplateView):
+class TableListView(LoginRequiredMixin, TemplateView):
     template_name = 'transfer/table_list.html'
 
     def get_context_data(self, **kwargs):

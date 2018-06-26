@@ -4,7 +4,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from django.shortcuts import get_object_or_404
 
 from common.mixins import IDInFilterMixin
-from common.permissions import IsSuperUserOrAppUser
+from common.permissions import IsSuperUserOrAppUser, IsValidUser
 from .models import Database, Table, Field
 from .serializers import DatabaseSerializer, TableSerializer, FieldSerializer
 
@@ -16,7 +16,7 @@ class DatabaseViewSet(IDInFilterMixin, BulkModelViewSet):
     queryset = Database.objects.all()
     serializer_class = DatabaseSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (IsSuperUserOrAppUser,)
+    permission_classes = (IsValidUser,)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -30,7 +30,7 @@ class TableViewSet(IDInFilterMixin, BulkModelViewSet):
     queryset = Table.objects.all()
     serializer_class = TableSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (IsSuperUserOrAppUser,)
+    permission_classes = (IsValidUser,)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -44,7 +44,7 @@ class FieldViewSet(IDInFilterMixin, BulkModelViewSet):
     queryset = Field.objects.all()
     serializer_class = FieldSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (IsSuperUserOrAppUser,)
+    permission_classes = (IsValidUser,)
 
     def get_queryset(self):
         queryset = super().get_queryset()

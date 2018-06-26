@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import redirect, reverse
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
+from django.contrib.auth.mixins import LoginRequiredMixin
 import datetime
 
 from common.utils import get_object_or_none, get_logger, is_uuid
@@ -15,7 +16,7 @@ from transfer.models import Database, Table, Field
 from transfer.forms.field import FieldCreateForm, FieldUpdateForm, FieldBulkUpdateForm
 
 
-class FieldListView(AdminUserRequiredMixin, TemplateView):
+class FieldListView(LoginRequiredMixin, TemplateView):
     template_name = 'transfer/field_list.html'
 
     def get_context_data(self, **kwargs):
@@ -123,7 +124,7 @@ class FieldUpdateView(AdminUserRequiredMixin, SuccessMessageMixin, UpdateView):
         return update_success_msg % ({"name": cleaned_data["name"]})
 
 
-class FieldBulkUpdateView(AdminUserRequiredMixin, ListView):
+class FieldBulkUpdateView(LoginRequiredMixin, ListView):
     model = Field
     form_class = FieldBulkUpdateForm
     template_name = 'transfer/field_bulk_update.html'

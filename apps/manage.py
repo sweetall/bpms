@@ -9,6 +9,16 @@ if __name__ == "__main__":
     except:
         pass
 
+    try:
+        os.makedirs('../data')
+    except:
+        pass
+
+    try:
+        os.makedirs('../tmp')
+    except:
+        pass
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bpms.settings")
     try:
         from django.core.management import execute_from_command_line

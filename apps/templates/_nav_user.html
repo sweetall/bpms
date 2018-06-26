@@ -39,9 +39,8 @@
         <i class="fa fa-inbox" style="width: 14px"></i> <span class="nav-label">{% trans 'Transfer' %}</span><span class="fa arrow"></span>
     </a>
     <ul class="nav nav-second-level">
-        <li id="user-asset"><a href="{% url 'assets:user-asset-list' %}">{% trans 'Transfer in' %}</a></li>
-        <li id="user-asset"><a href="{% url 'assets:user-asset-list' %}">{% trans 'Transfer out' %}</a></li>
-        <li id="user-asset"><a href="{% url 'assets:user-asset-list' %}">{% trans 'Transfer list' %}</a></li>
-        <li id="user-asset"><a href="{% url 'transfer:database-list' %}">{% trans 'Transfer database' %}</a></li>
+        <li id="schedule-import"><a href="{% url 'transfer:schedule-import-list' %}">{% trans 'Transfer in' %}</a></li>
+        <li id="schedule-export"><a href="{% url 'assets:user-asset-list' %}">{% trans 'Transfer out' %}</a></li>
+        <li id="database"><a href="{% url 'transfer:database-list' %}">{% trans 'Transfer database' %}</a></li>
     </ul>
 </li>

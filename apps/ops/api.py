@@ -8,6 +8,8 @@ from django.utils.translation import ugettext as _
 from rest_framework import viewsets, generics, mixins
 from rest_framework.views import Response
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import api_view
+from django_celery_beat.models import PeriodicTask
 
 from common.permissions import IsValidUser
 from .hands import IsSuperUser
@@ -93,7 +95,7 @@ class CeleryTaskLogApi(generics.RetrieveAPIView):
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics.GenericAPIView
-    filter_fields = ("periodic", "type")
+    filter_fields = ("periodic", "type", "creator")
     search_fields = filter_fields
     ordering_fields = ("create_time", )
     queryset = Schedule.objects.all()
@@ -105,3 +107,30 @@ class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset
+
+
+@api_view(['POST'])
+def active_task(request):
+    task_name = request.POST.get('task_name')
+    try:
+        task = PeriodicTask.objects.get(name=task_name)
+    except PeriodicTask.DoesNotExist:
+        return Response({'status': False, 'message': 'error: 任务不存在！'})
+    if task.schedule.creator != request.user:
+        return Response({'status': False, 'message': 'error: 不可操作非自己的任务！'})
+    task.enabled = not task.enabled
+    task.save()
+    return Response({'status': True, 'message': '状态修改成功！'})
+
+
+@api_view(['POST'])
+def delete_task(request):
+    task_id = request.POST.get('id')
+    try:
+        task = PeriodicTask.objects.get(id=task_id)
+    except PeriodicTask.DoesNotExist:
+        return Response({'status': False, 'message': 'error: 任务不存在！'})
+    if task.schedule.creator != request.user:
+        return Response({'status': False, 'message': 'error: 不可操作非自己的任务！'})
+    task.crontab.delete()
+    return Response({'status': True, 'message': '删除成功！'})

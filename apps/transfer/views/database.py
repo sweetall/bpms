@@ -7,18 +7,19 @@ import chardet
 from io import StringIO
 
 from django.views.generic import TemplateView, ListView
+from django.views import View
 from django.utils.translation import ugettext_lazy as _
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.decorators.csrf import csrf_exempt
-from django.urls import reverse_lazy
 from django.shortcuts import redirect, reverse
-from django.contrib import messages
-from django.views import View
 from django.core.cache import cache
-from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
+from django.urls import reverse_lazy
 
 from common.utils import get_object_or_none, get_logger, is_uuid
 from common.const import create_success_msg, update_success_msg
@@ -28,7 +29,7 @@ from transfer.forms.database import DatabaseCreateForm, DatabaseUpdateForm, Data
 from transfer.serializers import DatabaseSerializer
 
 
-class DatabaseListView(AdminUserRequiredMixin, TemplateView):
+class DatabaseListView(LoginRequiredMixin, TemplateView):
     template_name = 'transfer/database_list.html'
 
     def get_context_data(self, **kwargs):
@@ -101,7 +102,7 @@ class DatabaseUpdateView(AdminUserRequiredMixin, SuccessMessageMixin, UpdateView
         return update_success_msg % ({"name": cleaned_data["name"]})
 
 
-class DatabaseBulkUpdateView(AdminUserRequiredMixin, ListView):
+class DatabaseBulkUpdateView(LoginRequiredMixin, ListView):
     model = Database
     form_class = DatabaseBulkUpdateForm
     template_name = 'transfer/database_bulk_update.html'
