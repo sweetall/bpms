@@ -9,10 +9,6 @@ from .models import Task, AdHoc, AdHocRunHistory, Schedule
 
 # add start
 class PeriodicTaskSerializer(serializers.ModelSerializer):
-    crontab_info = serializers.SerializerMethodField()
-
-    def get_crontab_info(self, obj):
-        return obj.crontab.__str__()
 
     class Meta:
         model = PeriodicTask
@@ -24,17 +20,23 @@ class ScheduleSerializer(serializers.ModelSerializer):
     crontab_info = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     type_info = serializers.SerializerMethodField()
+    status_info = serializers.SerializerMethodField()
+    kwargs_dict = serializers.SerializerMethodField()
 
     def get_crontab_info(self, obj):
-        crontab = obj.periodic.crontab
-        k = json.loads(obj.periodic.kwargs).get('year', '')
-        return k + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + crontab.hour + ':' + crontab.minute
+        return obj.crontab_info
 
     def get_creator(self, obj):
         return obj.creator.username
 
     def get_type_info(self, obj):
-        return obj.TYPE_CHOICES[obj.type-1][-1]
+        return obj.type_info
+
+    def get_status_info(self, obj):
+        return obj.status_info
+
+    def get_kwargs_dict(self, obj):
+        return obj.kwargs_dict
 
     class Meta:
         model = Schedule

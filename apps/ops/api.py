@@ -5,10 +5,11 @@ import os
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
+from django.http.response import JsonResponse
 from rest_framework import viewsets, generics, mixins
 from rest_framework.views import Response
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from django_celery_beat.models import PeriodicTask
 
 from common.permissions import IsValidUser
@@ -95,7 +96,7 @@ class CeleryTaskLogApi(generics.RetrieveAPIView):
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics.GenericAPIView
-    filter_fields = ("periodic", "type", "creator")
+    filter_fields = ("periodic", "type")
     search_fields = filter_fields
     ordering_fields = ("create_time", )
     queryset = Schedule.objects.all()
@@ -105,32 +106,35 @@ class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics
     http_method_names = ('get', )
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset
+        if self.request.user.is_superuser:
+            return super().get_queryset()
+        return super().get_queryset().filter(creator=self.request.user)
 
 
 @api_view(['POST'])
+@permission_classes((IsValidUser, ))
 def active_task(request):
-    task_name = request.POST.get('task_name')
+    task_name = request.data.get('task_name')
     try:
         task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': 'error: 任务不存在！'})
+        return Response({'status': False, 'message': '任务不存在！'})
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': 'error: 不可操作非自己的任务！'})
+        return Response({'status': False, 'message': '不可操作非自己的任务！'})
     task.enabled = not task.enabled
     task.save()
     return Response({'status': True, 'message': '状态修改成功！'})
 
 
 @api_view(['POST'])
+@permission_classes((IsValidUser, ))
 def delete_task(request):
-    task_id = request.POST.get('id')
+    task_name = request.data.get('task_name')
     try:
-        task = PeriodicTask.objects.get(id=task_id)
+        task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': 'error: 任务不存在！'})
+        return Response({'status': False, 'message': '任务不存在！'})
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': 'error: 不可操作非自己的任务！'})
+        return Response({'status': False, 'message': '不可删除非自己的任务！'})
     task.crontab.delete()
     return Response({'status': True, 'message': '删除成功！'})

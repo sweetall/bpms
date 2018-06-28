@@ -10,7 +10,7 @@ import uuid
 
 from common.utils import get_object_or_none
 from ops.models.celery import Schedule
-from transfer.forms.schedule import ImportScheduleEditForm
+from transfer.forms.schedule import ImportScheduleCreateForm, ImportScheduleUpdateForm
 from common.const import create_success_msg, update_success_msg
 
 
@@ -28,7 +28,7 @@ class ImportScheduleListView(TemplateView):
 
 class ImportScheduleCreateView(SuccessMessageMixin, FormView):
     initial = {}
-    form_class = ImportScheduleEditForm
+    form_class = ImportScheduleCreateForm
     template_name = 'transfer/schedule_import_create.html'
     success_url = reverse_lazy('transfer:schedule-import-list')
 
@@ -47,7 +47,7 @@ class ImportScheduleCreateView(SuccessMessageMixin, FormView):
         return super().get_context_data(**kwargs)
 
     def get_success_message(self, cleaned_data):
-        return create_success_msg % ({"name": cleaned_data["name"]})
+        return create_success_msg % ({"name": '导入任务'})
 
     def post(self, request, *args, **kwargs):
         """
@@ -64,7 +64,7 @@ class ImportScheduleCreateView(SuccessMessageMixin, FormView):
 
 class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
     initial = {}
-    form_class = ImportScheduleEditForm
+    form_class = ImportScheduleUpdateForm
     template_name = 'transfer/schedule_import_update.html'
     success_url = reverse_lazy('transfer:schedule-import-list')
 

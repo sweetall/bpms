@@ -8,11 +8,11 @@
     <thead>
         <tr>
             <th class="text-center">任务名 </th>
-            <th class="text-center">类型</th>
+            <th class="text-center">命令</th>
             <th class="text-center">执行时间</th>
             <th class="text-center">状态</th>
             <th class="text-center">创建人</th>
-            <th class="text-center">创建时间</th>
+            <th class="text-center">更新时间</th>
             <th class="text-center">备注</th>
             <th class="text-center">操作</th>
         </tr>
@@ -35,17 +35,19 @@ function initTable() {
                 $(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));
             }},
             {targets: 1, createdCell: function (td, cellData, rowData) {
-                $(td).html(cellData)
+                var html_info = '';
+                for (var i in cellData.cmd){
+                    html_info += cellData.cmd[i] + '</br>'
+                }
+                $(td).html(html_info);
             }},
             {targets: 2, createdCell: function (td, cellData) {
-                $(td).html(cellData);
+                $(td).html(cellData)
             }},
             {targets: 3, createdCell: function (td, cellData) {
-                if (!cellData.enabled) {
-                    $(td).html('<i class="fa fa-times text-danger"></i>')
-                 } else {
-                    $(td).html('<i class="fa fa-check text-navy"></i>')
-                 }
+                $(td).html(
+                    '<span class="label label-primary">' + cellData + '</span>'
+                )
             }},
             {targets: 4, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
@@ -57,22 +59,30 @@ function initTable() {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }},
             {targets: 7, createdCell: function (td, cellData, rowData) {
+                var active_info = '激 活';
+                if (cellData.enabled){
+                    active_info = '取 消'
+                }
+                var active_disable = ' disabled';
+                if ((rowData.status === 1)||(rowData.status === 2)){
+                    active_disable = ''
+                }
                 $(td).html(
                     '<div class="btn-group">' +
-                        '<button class="btn btn-success btn-xs" onclick="activeSchedule(\'' + cellData.name + '\')">激活</button>' +
-                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(' + cellData.name + ')">删除</button>' +
+                        '<button class="btn btn-success btn-xs" onclick="activeSchedule(\'' + cellData.name + '\')"' + active_disable + '>' + active_info + '</button>' +
+                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(\'' + cellData.name + '\')">删 除</button>' +
                     '</div>'
                 )
             }}
         ],
-        ajax_url: '{% url "api-ops:schedule-list" %}' + '?type=1&creator={{ user.id }}',
+        ajax_url: '{% url "api-ops:schedule-list" %}' + '?type=1',
         columns: [
             {data: "periodic"},
-            {data: "type_info" },
+            {data: "kwargs_dict" },
             {data: "crontab_info" },
-            {data: "periodic" },
+            {data: "status_info" },
             {data: "creator"},
-            {data: "create_time"},
+            {data: "modify_time"},
             {data: "comment", orderable: false},
             {data: "periodic", orderable: false}
         ],
@@ -87,28 +97,51 @@ $(document).ready(function(){
 });
 
 function activeSchedule(periodic_task_name) {
+
     $.ajax({
-            url: "{% url 'api-ops:periodic_task-active' %}",
-            method: 'POST',
-            data: JSON.stringify({'task_name': periodic_task_name}),
-            dataType: "json",
-            contentType : 'application/json',
-            success: function (data, textStatus) {
-                if (data.status){
-                    location.reload()
-                }
-                else {
-                    console.log(data.message)
-                }
-            },
-            error: function () {
-                toastr.error('Table not found');
+        url: "{% url 'api-ops:periodic_task-active' %}",
+        type: 'POST',
+        data: JSON.stringify({'task_name': periodic_task_name}),
+        dataType: "json",
+        contentType : 'application/json; charset=utf-8',
+        {#async: false,#}  // jquery版本太低，取消异步未生效，谁来升个级？
+        success: function (data, textStatus) {
+            if (data.status){
+                {#console.log(data.message);#}
+                {#toastr.success(data.message);#}
+                location.reload()
             }
-        });
+            else {
+                toastr.error(data.message);
+            }
+        },
+        error: function () {
+            toastr.error('操作失败');
+        }
+     });
 }
 
-function deleteSchedule(periodic_task_id) {
-
+function deleteSchedule(periodic_task_name) {
+    $.ajax({
+        url: "{% url 'api-ops:periodic_task-delete' %}",
+        type: 'POST',
+        data: JSON.stringify({'task_name': periodic_task_name}),
+        dataType: "json",
+        contentType : 'application/json; charset=utf-8',
+        {#async: false,#} // jquery版本太低，取消异步未生效，谁来升个级？
+        success: function (data, textStatus) {
+            if (data.status){
+                {#toastr.success(data.message);#}
+                location.reload()
+            }
+            else {
+                toastr.error(data.message);
+            }
+        },
+        error: function () {
+            toastr.error('操作失败');
+        }
+     });
 }
 </script>
 {% endblock %}

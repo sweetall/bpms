@@ -22,7 +22,7 @@ msgid "Transfer"
 msgstr "HIVE导数"
 
 msgid "Transfer in"
-msgstr "导入任务"
+msgstr "生产-NAS"
 
 msgid "Transfer in create"
 msgstr "新建导入任务"
@@ -31,13 +31,13 @@ msgid "Transfer in update"
 msgstr "更新导入任务"
 
 msgid "Transfer out"
-msgstr "导出任务"
+msgstr "NAS-测试"
 
 msgid "Transfer list"
 msgstr "任务清单"
 
 msgid "Transfer database"
-msgstr "库清单"
+msgstr "库表清单"
 
 msgid "Import database"
 msgstr "导入库信息"
