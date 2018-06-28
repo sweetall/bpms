@@ -16,7 +16,7 @@ class ImportScheduleCreateForm(forms.Form):
         required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
-        label='选择表 *', choices=Table.objects.filter(is_active=True).values_list('id', 'name'),
+        label='选择表 *', choices=list(Table.objects.filter(is_active=True).values_list('id', 'name')),
         widget=forms.SelectMultiple(
             attrs={
                 'class': 'select2',
@@ -39,16 +39,18 @@ class ImportScheduleCreateForm(forms.Form):
     def save(self, request):
         database_id = self.cleaned_data.get('database')
         tables_id_list = self.cleaned_data.get('tables')
+        task_name = create_task_name(database_id)
         task_info = {
-            'name': create_task_name(database_id),
+            'name': task_name,
             'task': '',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
-                'database': self.cleaned_data.get('database'),
-                'tables': self.cleaned_data.get('tables'),
+                'database': database_id,
+                'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_import_cmd(database_id, tables_id_list)
+                'cmd': create_import_cmd(database_id, tables_id_list),
+                'task_name': task_name,
             },
             'enabled': False,
             'schedule': {
@@ -57,7 +59,6 @@ class ImportScheduleCreateForm(forms.Form):
                 'user': request.user,
             }
         }
-        # print(task_info)
         create_or_update_schedule_task(task=task_info)
 
 
@@ -68,7 +69,7 @@ class ImportScheduleUpdateForm(forms.Form):
         required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
-        label='选择表 *', choices=Table.objects.filter(is_active=True).values_list('id', 'name'),
+        label='选择表 *', choices=list(Table.objects.filter(is_active=True).values_list('id', 'name')),
         widget=forms.SelectMultiple(
             attrs={
                 'class': 'select2',
@@ -91,16 +92,18 @@ class ImportScheduleUpdateForm(forms.Form):
     def save(self, request):
         database_id = self.cleaned_data.get('database')
         tables_id_list = self.cleaned_data.get('tables')
+        task_name = self.cleaned_data.get('name')
         task_info = {
-            'name': self.cleaned_data.get('name'),
+            'name': task_name,
             'task': '',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
-                'database': self.cleaned_data.get('database'),
-                'tables': self.cleaned_data.get('tables'),
+                'database': database_id,
+                'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_import_cmd(database_id, tables_id_list)
+                'cmd': create_import_cmd(database_id, tables_id_list),
+                'task_name': task_name,
             },
             'enabled': False,
             'schedule': {

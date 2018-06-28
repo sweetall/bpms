@@ -11,9 +11,9 @@ __all__ = ['TableCreateForm', 'TableUpdateForm', 'TableBulkUpdateForm']
 class TableCreateForm(forms.ModelForm):
     database = forms.CharField(widget=forms.HiddenInput)
 
-    def clean_table(self):
+    def clean_database(self):
         try:
-            database = Database.objects.get(id=self.data['table'])
+            database = Database.objects.get(id=self.data['database'])
         except Database.DoesNotExist as err:
             raise forms.ValidationError('您访问的表不存在')
         return database
@@ -46,9 +46,9 @@ class TableCreateForm(forms.ModelForm):
 class TableUpdateForm(forms.ModelForm):
     database = forms.CharField(widget=forms.HiddenInput)
 
-    def clean_table(self):
+    def clean_database(self):
         try:
-            database = Database.objects.get(id=self.data['table'])
+            database = Database.objects.get(id=self.data['database'])
         except Database.DoesNotExist as err:
             raise forms.ValidationError('您访问的表不存在')
         return database
