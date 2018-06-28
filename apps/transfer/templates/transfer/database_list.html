@@ -24,6 +24,7 @@
             </th>
             <th class="text-center">库名</th>
             <th class="text-center">配额</th>
+            <th class="text-center">标签</th>
             <th class="text-center">对应开发</th>
             <th class="text-center">对应运维</th>
             <th class="text-center">对应业务</th>
@@ -84,27 +85,30 @@ function initTable() {
             {targets: 5, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 6, createdCell: function (td, cellData) {
+            {targets: 6, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData)
+            }},
+            {targets: 7, createdCell: function (td, cellData) {
                 if (!cellData) {
                     $(td).html('<i class="fa fa-times text-danger"></i>')
                 } else {
                     $(td).html('<i class="fa fa-check text-navy"></i>')
                 }
             }},
-            {targets: 7, createdCell: function (td, cellData, rowData) {
+            {targets: 8, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 8, createdCell: function (td, cellData, rowData) {
+            {targets: 9, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(' +0800', ''))
             }},
-            {targets: 9, createdCell: function (td, cellData, rowData) {
+            {targets: 10, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }}
         ],
         ajax_url: '{% url "api-transfer:database-list" %}',
         columns: [
-            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "dev" }, {data: "opr"}, {data: "bus"},
-            {data: "is_active", orderable: false }, {data: "modifier"}, {data: "modify_time"},
+            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "label_info" }, {data: "dev" }, {data: "opr"},
+            {data: "bus"}, {data: "is_active", orderable: false }, {data: "modifier"}, {data: "modify_time"},
             {data: "comment", orderable: false}
         ],
         op_html: $('#actions').html()

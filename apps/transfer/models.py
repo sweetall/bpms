@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from assets.models.label import Label
+
 
 # class Environment(models.Model):
 #     ENV_CHOICES = (
@@ -46,8 +48,8 @@ from django.db import models
 
 class Database(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    # environment = models.ForeignKey(Environment, blank=True, related_name='databases', on_delete=models.SET_NULL,
-    #                                 verbose_name='环境')
+    label = models.ForeignKey(Label, blank=True, null=True, related_name='databases', on_delete=models.SET_NULL,
+                              verbose_name='标签')
     name = models.CharField(max_length=100, verbose_name='库名')
     quota = models.IntegerField(verbose_name='配额')
     # used = models.IntegerField(verbose_name='使用量')
@@ -60,6 +62,10 @@ class Database(models.Model):
     comment = models.TextField(max_length=200, default='', blank=True, verbose_name='备注')
     modifier = models.CharField(default='Admin', blank=True, max_length=50, verbose_name='最近修改人')
     modify_time = models.DateTimeField(blank=True, editable=False, auto_now=True)
+
+    @property
+    def label_info(self):
+        return self.label.__str__() if self.label else ''
 
     class Meta:
         ordering = ('name', )

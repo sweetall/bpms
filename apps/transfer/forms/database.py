@@ -11,7 +11,7 @@ __all__ = ['DatabaseCreateForm', 'DatabaseUpdateForm', 'DatabaseBulkUpdateForm']
 class DatabaseCreateForm(forms.ModelForm):
     class Meta:
         model = Database
-        fields = ['name', 'quota', 'dev', 'opr', 'bus', 'is_active', 'comment']
+        fields = ['name', 'quota', 'label', 'dev', 'opr', 'bus', 'is_active', 'comment']
         # widgets = {
         #     'nodes': forms.SelectMultiple(attrs={
         #         'class': 'select2', 'data-placeholder': _('Nodes')
@@ -40,7 +40,7 @@ class DatabaseCreateForm(forms.ModelForm):
 class DatabaseUpdateForm(forms.ModelForm):
     class Meta:
         model = Database
-        fields = ['name', 'quota', 'dev', 'opr', 'bus', 'is_active', 'comment']
+        fields = ['name', 'quota', 'label', 'dev', 'opr', 'bus', 'is_active', 'comment']
         help_texts = {
             'name': '* required',
             'quota': '* required',
@@ -63,7 +63,7 @@ class DatabaseBulkUpdateForm(forms.ModelForm):
     class Meta:
         model = Database
         fields = [
-            'databases', 'dev', 'opr', 'bus', 'comment'
+            'databases', 'label', 'dev', 'opr', 'bus', 'comment'
         ]
 
     def save(self, commit=True):
