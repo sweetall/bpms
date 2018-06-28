@@ -5,7 +5,7 @@ from .models import Database, Table, Field
 
 @admin.register(Database)
 class DatabaseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'quota', 'is_active', 'dev', 'opr', 'comment')
+    list_display = ('name', 'quota', 'is_active', 'dev', 'opr', 'bus', 'comment')
     search_fields = ('name', )
     ordering = ('name', )
     readonly_fields = ('modifier', 'modify_time')
@@ -13,7 +13,7 @@ class DatabaseAdmin(admin.ModelAdmin):
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ('name', 'database', 'is_active', 'dev', 'opr', 'comment')
+    list_display = ('name', 'database', 'is_active', 'dev', 'opr', 'bus', 'comment')
     search_fields = ('name', )
     ordering = ('name', )
     readonly_fields = ('modifier', 'modify_time')

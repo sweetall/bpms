@@ -30,6 +30,7 @@ class TableCreateForm(forms.ModelForm):
             'partition_field',
             'dev',
             'opr',
+            'bus',
             'is_active',
             'comment'
         ]
@@ -64,6 +65,7 @@ class TableUpdateForm(forms.ModelForm):
             'partition_field',
             'dev',
             'opr',
+            'bus',
             'is_active',
             'comment'
         ]
@@ -93,6 +95,7 @@ class TableBulkUpdateForm(forms.ModelForm):
             'tables',
             'dev',
             'opr',
+            'bus',
             'comment'
         ]
 

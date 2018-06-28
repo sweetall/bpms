@@ -26,6 +26,7 @@
             <th class="text-center">配额</th>
             <th class="text-center">对应开发</th>
             <th class="text-center">对应运维</th>
+            <th class="text-center">对应业务</th>
             <th class="text-center">是否可用</th>
             <th class="text-center">最近修改人</th>
             <th class="text-center">修改时间</th>
@@ -80,26 +81,29 @@ function initTable() {
             {targets: 4, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 5, createdCell: function (td, cellData) {
+            {targets: 5, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData)
+            }},
+            {targets: 6, createdCell: function (td, cellData) {
                 if (!cellData) {
                     $(td).html('<i class="fa fa-times text-danger"></i>')
                 } else {
                     $(td).html('<i class="fa fa-check text-navy"></i>')
                 }
             }},
-            {targets: 6, createdCell: function (td, cellData, rowData) {
+            {targets: 7, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 7, createdCell: function (td, cellData, rowData) {
+            {targets: 8, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(' +0800', ''))
             }},
-            {targets: 8, createdCell: function (td, cellData, rowData) {
+            {targets: 9, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }}
         ],
         ajax_url: '{% url "api-transfer:database-list" %}',
         columns: [
-            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "dev" }, {data: "opr"},
+            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "dev" }, {data: "opr"}, {data: "bus"},
             {data: "is_active", orderable: false }, {data: "modifier"}, {data: "modify_time"},
             {data: "comment", orderable: false}
         ],

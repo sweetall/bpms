@@ -10,7 +10,7 @@ from .serializers import DatabaseSerializer, TableSerializer, FieldSerializer
 
 
 class DatabaseViewSet(IDInFilterMixin, BulkModelViewSet):
-    filter_fields = ("name", "dev", 'opr', 'comment')
+    filter_fields = ("name", "dev", 'opr', 'bus', 'comment')
     search_fields = filter_fields
     ordering_fields = ("name", )
     queryset = Database.objects.all()
@@ -24,7 +24,7 @@ class DatabaseViewSet(IDInFilterMixin, BulkModelViewSet):
 
 
 class TableViewSet(IDInFilterMixin, BulkModelViewSet):
-    filter_fields = ("database", "name", "dev", 'opr', 'comment')
+    filter_fields = ("database", "name", "dev", 'opr', 'bus', 'comment')
     search_fields = filter_fields
     ordering_fields = ("name", )
     queryset = Table.objects.all()

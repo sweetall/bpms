@@ -124,7 +124,7 @@ class TableUpdateView(AdminUserRequiredMixin, SuccessMessageMixin, UpdateView):
         return update_success_msg % ({"name": cleaned_data["name"]})
 
 
-class TableBulkUpdateView(AdminUserRequiredMixin, ListView):
+class TableBulkUpdateView(LoginRequiredMixin, ListView):
     model = Table
     form_class = TableBulkUpdateForm
     template_name = 'transfer/table_bulk_update.html'

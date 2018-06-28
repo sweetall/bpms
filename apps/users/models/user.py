@@ -74,7 +74,7 @@ class User(AbstractUser):
     comment = models.TextField(
         max_length=200, blank=True, verbose_name=_('Comment')
     )
-    is_first_login = models.BooleanField(default=True)
+    is_first_login = models.BooleanField(default=False)
     date_expired = models.DateTimeField(
         default=date_expired_default, blank=True, null=True,
         db_index=True, verbose_name=_('Date expired')
