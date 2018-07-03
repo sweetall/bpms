@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
 from django.http.response import JsonResponse
-from rest_framework import viewsets, generics, mixins
+from rest_framework import viewsets, generics, mixins, status
 from rest_framework.views import Response
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.decorators import api_view, permission_classes
@@ -14,9 +14,9 @@ from django_celery_beat.models import PeriodicTask
 
 from common.permissions import IsValidUser
 from .hands import IsSuperUser
-from .models import Task, AdHoc, AdHocRunHistory, CeleryTask, Schedule
+from .models import Task, AdHoc, AdHocRunHistory, CeleryTask
 from .serializers import TaskSerializer, AdHocSerializer, \
-    AdHocRunHistorySerializer, ScheduleSerializer
+    AdHocRunHistorySerializer
 from .tasks import run_ansible_task
 
 
@@ -95,22 +95,7 @@ class CeleryTaskLogApi(generics.RetrieveAPIView):
             return Response({"data": data, 'end': self.end, 'mark': mark})
 
 
-class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics.GenericAPIView
-    filter_fields = ("periodic", "type")
-    search_fields = filter_fields
-    ordering_fields = ("create_time", )
-    queryset = Schedule.objects.all()
-    serializer_class = ScheduleSerializer
-    pagination_class = LimitOffsetPagination
-    permission_classes = (IsValidUser,)
-    http_method_names = ('get', )
-
-    def get_queryset(self):
-        if self.request.user.is_superuser:
-            return super().get_queryset()
-        return super().get_queryset().filter(creator=self.request.user)
-
-
+# add
 @api_view(['POST'])
 @permission_classes((IsValidUser, ))
 def active_task(request):
@@ -118,9 +103,9 @@ def active_task(request):
     try:
         task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': '任务不存在！'})
+        return Response({'status': False, 'message': '任务不存在！'}, status=status.HTTP_404_NOT_FOUND)
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': '不可操作非自己的任务！'})
+        return Response({'status': False, 'message': '不可操作非自己的任务！'}, status=status.HTTP_400_BAD_REQUEST)
     task.enabled = not task.enabled
     task.save()
     return Response({'status': True, 'message': '状态修改成功！'})
@@ -133,8 +118,8 @@ def delete_task(request):
     try:
         task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': '任务不存在！'})
+        return Response({'status': False, 'message': '任务不存在！'}, status=status.HTTP_404_NOT_FOUND)
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': '不可删除非自己的任务！'})
+        return Response({'status': False, 'message': '不可删除非自己的任务！'}, status=status.HTTP_400_BAD_REQUEST)
     task.crontab.delete()
     return Response({'status': True, 'message': '删除成功！'})

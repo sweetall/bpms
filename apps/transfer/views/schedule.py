@@ -9,7 +9,7 @@ import json
 import uuid
 
 from common.utils import get_object_or_none
-from ops.models.celery import Schedule
+from ..models import Schedule
 from transfer.forms.schedule import ImportScheduleCreateForm, ImportScheduleUpdateForm
 from common.const import create_success_msg, update_success_msg
 

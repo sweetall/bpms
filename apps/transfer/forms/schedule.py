@@ -1,12 +1,8 @@
-import random
-import string
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django_celery_beat.models import PeriodicTask
 
 from transfer.models import Database, Table
-from ops.celery.utils import create_or_update_schedule_task
+from ..utils import create_or_update_schedule_task, create_import_cmd, create_task_name
 __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm']
 
 
@@ -54,7 +50,7 @@ class ImportScheduleCreateForm(forms.Form):
             },
             'enabled': False,
             'schedule': {
-                'type': 1,
+                'type': 0,
                 'comment': self.cleaned_data.get('comment'),
                 'user': request.user,
             }
@@ -107,45 +103,9 @@ class ImportScheduleUpdateForm(forms.Form):
             },
             'enabled': False,
             'schedule': {
-                'type': 1,
+                'type': 0,
                 'comment': self.cleaned_data.get('comment'),
                 'user': request.user,
             }
         }
         create_or_update_schedule_task(task=task_info)
-
-
-def create_task_name(database_id):
-    try:
-        database = Database.objects.get(id=database_id)
-    except Database.DoesNotExist:
-        return
-    database_name = database.name
-    task_name = database_name + timezone.localtime(timezone.now()).strftime('-%Y-%m-%d_%H-%M-%S')
-    if not PeriodicTask.objects.filter(name=task_name):
-        return task_name
-    for i in range(10):
-        random_str = '_' + ''.join(random.sample(string.ascii_letters + string.digits, 3))
-        task_name += random_str
-        if not PeriodicTask.objects.filter(name=task_name):
-            return task_name
-
-
-def create_import_cmd(database_id, tables_id_list):
-    try:
-        database = Database.objects.get(id=database_id)
-    except Database.DoesNotExist:
-        return []
-    cmd = []
-    database_name = database.name
-    for table_id in tables_id_list:
-        try:
-            table = Table.objects.get(id=table_id)
-        except Table.DoesNotExist:
-            break
-        table_name = table.name
-        cmd.append(
-            '/appdata/hadoopbak/shell/bachBackupHdfs.sh /user/hive/warehouse/{db}/{table}'.format(db=database_name,
-                                                                                                  table=table_name)
-        )
-    return cmd

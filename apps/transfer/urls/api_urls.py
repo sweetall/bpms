@@ -7,6 +7,7 @@ router = BulkRouter()
 router.register(r'databases', api.DatabaseViewSet, 'database')
 router.register(r'tables', api.TableViewSet, 'table')
 router.register(r'fields', api.FieldViewSet, 'field')
+router.register(r'schedules', api.ScheduleViewSet, 'schedule')
 
 urlpatterns = [
 

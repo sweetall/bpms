@@ -3,7 +3,7 @@
 {% block table_search %}
 {% endblock %}
 {% block table_container %}
-<div class="uc pull-left m-r-5"><a href="{% url "transfer:schedule-import-create" %}" class="btn btn-sm btn-primary"> {% trans "Transfer in create" %} </a></div>
+<div class="uc pull-left m-r-5"><a href="{% url "transfer:schedule-export-create" %}" class="btn btn-sm btn-primary"> {% trans "Transfer in create" %} </a></div>
 <table class="table table-striped table-bordered table-hover " id="schedule_list_table" >
     <thead>
         <tr>
@@ -31,7 +31,7 @@ function initTable() {
         ele: $('#schedule_list_table'),
         columnDefs: [
             {targets: 0, createdCell: function (td, cellData, rowData) {
-                var detail_btn = '<a href="{% url 'transfer:schedule-import-update' pk=DEFAULT_PK %}">' + cellData.name + '</a>';
+                var detail_btn = '<a href="{% url 'transfer:schedule-export-update' pk=DEFAULT_PK %}">' + cellData.name + '</a>';
                 $(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));
             }},
             {targets: 1, createdCell: function (td, cellData, rowData) {
@@ -64,7 +64,7 @@ function initTable() {
                     active_info = '取 消'
                 }
                 var active_disable = ' disabled';
-                if ((rowData.status_info === '等待执行')||(rowData.status_info === '取消执行')){
+                if ((rowData.status === 1)||(rowData.status === 2)){
                     active_disable = ''
                 }
                 $(td).html(
@@ -75,7 +75,7 @@ function initTable() {
                 )
             }}
         ],
-        ajax_url: '{% url "api-transfer:schedule-list" %}' + '?type=1',
+        ajax_url: '{% url "api-ops:schedule-list" %}' + '?type=2',
         columns: [
             {data: "periodic"},
             {data: "kwargs_dict" },

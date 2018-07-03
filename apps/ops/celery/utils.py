@@ -7,73 +7,8 @@ from django.db.utils import ProgrammingError, OperationalError
 from django.core.cache import cache
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 
-from ops.models.celery import Schedule
-
 
 # add start
-def create_or_update_schedule_task(task):
-    """
-    :param task: {
-        'name': '定时任务001',
-        'task': 'tasks.add', # A registered celery task,
-        'crontab': "30 7 * * *",
-        'args': (16, 16),
-        'kwargs': {},
-        'enabled': False,
-        'schedule': {
-            'type': 1,
-            'comment': '',
-            'user': User,
-        }
-    }
-    :return:
-    """
-    # Todo: check task valid, task and callback must be a celery task
-    try:
-        IntervalSchedule.objects.all().count()
-    except (ProgrammingError, OperationalError):
-        return None
-
-    if isinstance(task.get("crontab"), str):
-        try:
-            minute, hour, day, month, week = task["crontab"].split()
-        except ValueError:
-            raise SyntaxError("crontab is not valid")
-        kwargs = dict(
-            minute=minute, hour=hour, day_of_week=week,
-            day_of_month=day, month_of_year=month,
-        )
-        crontab = CrontabSchedule.objects.create(**kwargs)
-    else:
-        raise SyntaxError("Schedule is not valid")
-
-    task_defaults = dict(
-        crontab=crontab,
-        name=task['name'],
-        task=task['task'],
-        args=json.dumps(task.get('args', [])),
-        kwargs=json.dumps(task.get('kwargs', {})),
-        enabled=task.get('enabled', True),
-    )
-    periodic_task = PeriodicTask.objects.update_or_create(
-        defaults=task_defaults, name=task['name'],
-    )
-    schedule_defaults = dict(
-        periodic=periodic_task,
-        type=task['schedule'].get('type', 1),
-        comment=task['schedule'].get('comment', '')
-    )
-    schedule, _created = Schedule.objects.update_or_create(
-        periodic=periodic_task, defaults=schedule_defaults
-    )
-    if _created:
-        schedule.creator = task['schedule'].get('user')
-        schedule.save()
-    else:
-        schedule.modifier = task['schedule'].get('user')
-        schedule.save()
-    return schedule
-
 
 def enable_celery_periodic_task(task_name):
     from django_celery_beat.models import PeriodicTask

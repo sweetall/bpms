@@ -2,7 +2,7 @@
 
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView
 
 from common.mixins import DatetimeSearchMixin
 from .models import Task, AdHoc, AdHocRunHistory, CeleryTask
