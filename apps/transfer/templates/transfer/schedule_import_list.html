@@ -75,7 +75,7 @@ function initTable() {
                 )
             }}
         ],
-        ajax_url: '{% url "api-transfer:schedule-list" %}' + '?type=1',
+        ajax_url: '{% url "api-transfer:schedule-list" %}' + '?type=0',
         columns: [
             {data: "periodic"},
             {data: "kwargs_dict" },

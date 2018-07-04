@@ -78,20 +78,20 @@
     });
 
     $('select:first').change(function(){
-        var database_id=$(this).children('option:selected').val();
-        initTables(database_id);
+        var schedule_id=$(this).children('option:selected').val();
+        initTables(schedule_id);
     });
 
-    function initTables(database_id) {
+    function initTables(schedule_id) {
         $.ajax({
-            url: "{% url 'api-transfer:table-list' %}" + '?database=' + database_id,
+            url: "{% url 'api-transfer:command-list' %}" + '?schedule=' + schedule_id,
             method: 'GET',
             data: {},
             dataType: "json",
             success: function (data, textStatus) {
                 var options_html='';
                 for (var i in data){
-                    options_html += '<option value="'+data[i].id+'">'+data[i].name+'</option>'
+                    options_html += '<option value="'+data[i].table.id+'">'+data[i].table.name+'</option>'
                  }
                 $('#id_tables').html(options_html);
                 {#console.log(data)#}

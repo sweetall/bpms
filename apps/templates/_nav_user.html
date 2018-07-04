@@ -40,7 +40,8 @@
     </a>
     <ul class="nav nav-second-level">
         <li id="schedule-import"><a href="{% url 'transfer:schedule-import-list' %}">{% trans 'Transfer in' %}</a></li>
-        <li id="schedule-export"><a href="{% url 'assets:user-asset-list' %}">{% trans 'Transfer out' %}</a></li>
+        <li id="schedule-export"><a href="{% url 'transfer:schedule-export-list' %}">{% trans 'Transfer out' %}</a></li>
+{#        <li id="command"><a href="{% url 'transfer:command-list' %}">{% trans 'Transfer command' %}</a></li>#}
         <li id="database"><a href="{% url 'transfer:database-list' %}">{% trans 'Transfer database' %}</a></li>
     </ul>
 </li>

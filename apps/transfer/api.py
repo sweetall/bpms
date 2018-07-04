@@ -5,8 +5,8 @@ from django.shortcuts import get_object_or_404
 
 from common.mixins import IDInFilterMixin
 from common.permissions import IsSuperUserOrAppUser, IsValidUser
-from .models import Database, Table, Field, Schedule
-from .serializers import DatabaseSerializer, TableSerializer, FieldSerializer, ScheduleSerializer
+from .models import Database, Table, Field, Schedule, Command
+from .serializers import DatabaseSerializer, TableSerializer, FieldSerializer, ScheduleSerializer, CommandSerializer
 
 
 class DatabaseViewSet(IDInFilterMixin, BulkModelViewSet):
@@ -65,3 +65,18 @@ class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics
         if self.request.user.is_superuser:
             return super().get_queryset()
         return super().get_queryset().filter(creator=self.request.user)
+
+
+class CommandViewSet(viewsets.ModelViewSet):
+    filter_fields = ('schedule', 'table')
+    ordering_fields = ("id",)
+    search_fields = filter_fields
+    queryset = Command.objects.all()
+    serializer_class = CommandSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = (IsValidUser,)
+    http_method_names = ('get', )
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset
