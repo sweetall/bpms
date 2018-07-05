@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 
 from django.urls import path, re_path
-from transfer.views import database, table, field, schedule
+from transfer.views import database, table, field, schedule, command
 
 __all__ = ["urlpatterns"]
 
@@ -34,5 +34,7 @@ urlpatterns = [
 
     path('schedule-export/', schedule.ExportScheduleListView.as_view(), name='schedule-export-list'),
     path('schedule-export/create/', schedule.ExportScheduleCreateView.as_view(), name='schedule-export-create'),
-    path('schedule-export/<str:pk>/update/', schedule.ExportScheduleUpdateView.as_view(), name='schedule-export-update')
+    path('schedule-export/<str:pk>/update/', schedule.ExportScheduleUpdateView.as_view(), name='schedule-export-update'),
+
+    path('command/', command.CommandListView.as_view(), name='command-list'),
 ]

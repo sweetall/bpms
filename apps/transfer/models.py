@@ -168,6 +168,10 @@ class Command(models.Model):
     content = models.CharField(max_length=1000, verbose_name='内容')
     status = models.IntegerField(choices=STATUS_CHOICES, default=0, verbose_name='状态')
 
+    @property
+    def status_info(self):
+        return self.STATUS_CHOICES[self.status][-1]
+
     class Meta:
         ordering = ('schedule',)
         verbose_name = '命令'

@@ -6,7 +6,7 @@
 {% if user.is_superuser %}
 <div class="uc pull-left m-r-5"><a href="{% url "transfer:field-create" pk=table_id %}" class="btn btn-sm btn-primary"> {% trans "Create field" %} </a></div>
 {% endif %}
-<table class="table table-striped table-bordered table-hover " id="table_list_table" >
+<table class="table table-striped table-bordered table-hover " id="field_list_table" >
     <thead>
         <tr>
             <th class="text-center">
@@ -49,7 +49,7 @@
 
 function initTable() {
      var options = {
-        ele: $('#table_list_table'),
+        ele: $('#field_list_table'),
         columnDefs: [
             {targets: 1, createdCell: function (td, cellData, rowData) {
                 {#var detail_btn = '<a href="{% url 'transfer:field-update' tb_id=table_id pk=DEFAULT_PK %}">' + cellData + '</a>';#}
@@ -101,7 +101,7 @@ $(document).ready(function(){
 
 }).on('click', '#btn_bulk_update', function(){
     var action = $('#slct_bulk_update').val();
-    var $data_table = $('#table_list_table').DataTable();
+    var $data_table = $('#field_list_table').DataTable();
     var id_list = [];
     var plain_id_list = [];
     $data_table.rows({selected: true}).every(function(){
@@ -154,7 +154,7 @@ $(document).ready(function(){
             var success = function() {
                 var msg = "{% trans 'Item Deleted.' %}";
                 swal("{% trans 'Item Delete' %}", msg, "success");
-                $('#table_list_table').DataTable().ajax.reload();
+                $('#field_list_table').DataTable().ajax.reload();
             };
             var fail = function() {
                 var msg = "{% trans 'Deleting failed.' %}";

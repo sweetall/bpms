@@ -5,6 +5,7 @@ from django.shortcuts import reverse, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 import uuid
 
@@ -15,7 +16,7 @@ from transfer.forms.schedule import ImportScheduleCreateForm, ImportScheduleUpda
 from common.const import create_success_msg, update_success_msg
 
 
-class ImportScheduleListView(TemplateView):
+class ImportScheduleListView(LoginRequiredMixin, TemplateView):
     template_name = 'transfer/schedule_import_list.html'
 
     def get_context_data(self, **kwargs):
@@ -106,7 +107,7 @@ class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
         return update_success_msg % ({"name": cleaned_data["name"]})
 
 
-class ExportScheduleListView(TemplateView):
+class ExportScheduleListView(LoginRequiredMixin, TemplateView):
     template_name = 'transfer/schedule_export_list.html'
 
     def get_context_data(self, **kwargs):

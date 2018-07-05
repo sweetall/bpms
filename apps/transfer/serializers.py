@@ -75,7 +75,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
 
 class CommandSerializer(serializers.ModelSerializer):
+    schedule = ScheduleSerializer(read_only=True)
     table = TableSerializer(read_only=True)
+    status_info = serializers.SerializerMethodField()
+
+    def get_status_info(self, obj):
+        return obj.status_info
 
     class Meta:
         model = Command
