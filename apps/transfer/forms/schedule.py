@@ -5,6 +5,8 @@ from django_celery_beat.models import PeriodicTask
 
 from transfer.models import Database, Table, Schedule, Command
 from ..utils import create_or_update_schedule_task, create_import_cmd, create_task_name, create_export_cmd
+from common.utils import get_object_or_none
+
 __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportScheduleCreateForm',
            'ExportScheduleUpdateForm']
 
@@ -109,9 +111,10 @@ class ImportScheduleUpdateForm(forms.Form):
 
 
 class ExportScheduleCreateForm(forms.Form):
-    database = forms.ChoiceField(
+    # schedule = forms.ModelChoiceField(queryset=Schedule.objects.filter(type=0), required=True, label='选择任务 *')
+    schedule = forms.ChoiceField(
         choices=[('0', '--------')]+list(Schedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
-                                         .values_list('id', 'periodic__name')), required=True, label='选择库 *')
+                                         .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,
         label='选择表 *', choices=list(set(Command.objects.filter(status=0)  # 2
@@ -133,7 +136,7 @@ class ExportScheduleCreateForm(forms.Form):
         return crontab
 
     def save(self, request):
-        from_schedule = Schedule.objects.get(id=self.cleaned_data['database'])
+        from_schedule = Schedule.objects.get(id=self.cleaned_data['schedule'])
         database_id = json.loads(from_schedule.periodic.kwargs).get('database', '')
         tables_id_list = self.cleaned_data.get('tables')
         task_name = create_task_name(database_id)
@@ -162,9 +165,10 @@ class ExportScheduleCreateForm(forms.Form):
 
 class ExportScheduleUpdateForm(forms.Form):
     name = forms.CharField(widget=forms.HiddenInput)
-    database = forms.ChoiceField(
+    # schedule = forms.ModelChoiceField(queryset=Schedule.objects.filter(type=0), required=True, label='选择任务 *')
+    schedule = forms.ChoiceField(
         choices=[('0', '--------')] + list(Schedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
-                                           .values_list('id', 'periodic__name')), required=True, label='选择库 *')
+                                           .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,
         label='选择表 *', choices=list(set(Command.objects.filter(status=0)  # 2
@@ -186,7 +190,7 @@ class ExportScheduleUpdateForm(forms.Form):
         return crontab
 
     def save(self, request):
-        from_schedule = Schedule.objects.get(id=self.cleaned_data['database'])
+        from_schedule = Schedule.objects.get(id=self.cleaned_data['schedule'])
         database_id = json.loads(from_schedule.periodic.kwargs).get('database', '')
         tables_id_list = self.cleaned_data.get('tables')
         task_name = self.cleaned_data.get('name')

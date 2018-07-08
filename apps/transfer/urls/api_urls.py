@@ -9,6 +9,7 @@ router.register(r'tables', api.TableViewSet, 'table')
 router.register(r'fields', api.FieldViewSet, 'field')
 router.register(r'schedules', api.ScheduleViewSet, 'schedule')
 router.register(r'commands', api.CommandViewSet, 'command')
+router.register(r'user_commands', api.UserCommandViewSet, 'user_command')
 
 urlpatterns = [
 

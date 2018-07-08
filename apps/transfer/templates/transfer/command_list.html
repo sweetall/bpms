@@ -4,7 +4,7 @@
 {% endblock %}
 {% block table_container %}
 
-<table class="table table-striped table-bordered table-hover " id="command_list_table" >
+<table class="table table-striped table-bordered table-hover " id="command_list_table" style="width: 100%">
     <thead>
         <tr>
             <th class="text-center">任务名</th>
@@ -48,15 +48,14 @@ function initTable() {
                 $(td).html(cellData.creator)
             }}
         ],
-        ajax_url: '{% url "api-transfer:command-list" %}',
+        ajax_url: '{% url "api-transfer:user_command-list" %}',
         columns: [
-            {#{data: "id"},#}
-            {data: "schedule"},
-            {data: "schedule"},
+            {data: "schedule", orderable:false},
+            {data: "schedule", orderable:false},
             {data: "content" },
-            {data: "schedule"},
+            {data: "schedule", orderable:false},
             {data: "status_info"},
-            {data: "schedule"}
+            {data: "schedule", orderable:false}
         ],
         op_html: $('#actions').html()
     };

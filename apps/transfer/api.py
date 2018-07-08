@@ -78,5 +78,12 @@ class CommandViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', )
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset
+        return super().get_queryset()
+
+
+class UserCommandViewSet(CommandViewSet):
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return super().get_queryset()
+        return super().get_queryset().filter(schedule__creator=self.request.user)

@@ -30,6 +30,12 @@ msgstr "新建导入任务"
 msgid "Transfer in update"
 msgstr "更新导入任务"
 
+msgid "Transfer out create"
+msgstr "新建导出任务"
+
+msgid "Transfer out update"
+msgstr "更新导出任务"
+
 msgid "Transfer out"
 msgstr "NAS-测试"
 
@@ -38,6 +44,9 @@ msgstr "任务清单"
 
 msgid "Transfer database"
 msgstr "库表清单"
+
+msgid "Transfer command"
+msgstr "命令清单"
 
 msgid "Import database"
 msgstr "导入库信息"
