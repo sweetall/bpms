@@ -11,23 +11,56 @@ from common.mixins import UserMixin, DateMixin
 from assets.models.label import Label
 
 
-# # 待补充，与源库字段保持一致
-# class Subsystem(models.Model):
-#     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-#     name = models.CharField(max_length=200, verbose_name='英文简称')
-#     dev = models.CharField(blank=True, max_length=100, verbose_name='对应开发')
-#     opr = models.CharField(blank=True, max_length=100, verbose_name='对应运维')
-#     comment = models.TextField(max_length=200, default='', blank=True, verbose_name='备注')
-#     modifier = models.CharField(default='Admin', blank=True, max_length=50, verbose_name='最近修改人')
-#     modify_time = models.DateTimeField(blank=True, editable=False, auto_now=True)
-#
-#     class Meta:
-#         ordering = ('name',)
-#         verbose_name = '子系统'
-#         verbose_name_plural = verbose_name
-#
-#     def __str__(self):
-#         return self.name
+# 待补充，与源库字段保持一致
+class Subsystem(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    group_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='组标签')
+    sys_en_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='子系统英文名')
+    type = models.CharField(max_length=200, blank=True, null=True, verbose_name='类型')
+    id_itmis_sub_system = models.IntegerField(blank=True, null=True, verbose_name='id_itmis_sub_system')
+    en_name_abbr = models.CharField(max_length=200, blank=True, null=True, unique=True, verbose_name='子系统英文简称')
+    en_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用英文名')
+    cn_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用中文名')
+    brief_desc = models.CharField(max_length=200, blank=True, null=True, verbose_name='子系统简介')
+    framework = models.CharField(max_length=200, blank=True, null=True, verbose_name='framework')
+    id_team_opr = models.CharField(max_length=200, blank=True, null=True, verbose_name='事件响应组ID')
+    id_team_srv = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用服务组ID')
+    id_team_test = models.CharField(max_length=200, blank=True, null=True, verbose_name='测试分组ID')
+    id_team_dev = models.CharField(max_length=200, blank=True, null=True, verbose_name='开发分组ID')
+    id_team_deploy = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用部署组ID')
+    subsys_or_support = models.CharField(max_length=200, blank=True, null=True, verbose_name='子系统/支持程序')
+    is_key = models.CharField(max_length=200, blank=True, null=True, verbose_name='是否关键子系统')  #
+    status = models.CharField(max_length=200, blank=True, null=True, verbose_name='状态')
+    date_online = models.CharField(max_length=200, blank=True, null=True, verbose_name='上线时间')
+    date_offline = models.CharField(max_length=200, blank=True, null=True, verbose_name='下线时间')
+    version_manager = models.CharField(max_length=200, blank=True, null=True, verbose_name='子系统版本经理')
+    is_internet = models.CharField(max_length=200, blank=True, null=True, verbose_name='是否联网')
+    important_grade = models.CharField(max_length=200, blank=True, null=True, verbose_name='重要级别')
+    company_id = models.CharField(max_length=200, blank=True, null=True, verbose_name='子公司ID')
+    service_window = models.CharField(max_length=200, blank=True, null=True, verbose_name='维护窗口')
+    id_itmis_system = models.IntegerField(blank=True, null=True, verbose_name='id_itmis_system')
+    is_publish = models.CharField(max_length=200, blank=True, null=True, verbose_name='是否发布')
+    is_outsourcing = models.CharField(max_length=200, blank=True, null=True, verbose_name='是否外购')
+    group_number = models.CharField(max_length=200, blank=True, null=True, verbose_name='group_number')
+    id_team_dev_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='开发分组')
+    id_team_test_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='测试分组')
+    id_team_opr_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='事件响应组')
+    id_team_srv_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用服务组')
+    id_team_deploy_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='应用部署组')
+    remark = models.CharField(max_length=200, blank=True, null=True, verbose_name='备注')
+    created_by = models.CharField(max_length=200, blank=True, null=True, verbose_name='创建人')
+    updated_by = models.CharField(max_length=200, blank=True, null=True, verbose_name='修改人')
+    updated_date = models.CharField(max_length=200, blank=True, null=True, verbose_name='修改时间')
+    created_date = models.CharField(max_length=200, blank=True, null=True, verbose_name='创建时间')
+    rw = models.CharField(max_length=200, blank=True, null=True, verbose_name='rw')
+
+    class Meta:
+        ordering = ('en_name_abbr',)
+        verbose_name = '子系统'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.en_name_abbr
 
 
 class Database(models.Model):
@@ -62,8 +95,8 @@ class Database(models.Model):
 
 class Table(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    # subsystem = models.ForeignKey(Subsystem, blank=True, related_name='tables', on_delete=models.SET_NULL,
-    #                               verbose_name='子系统')
+    subsystem = models.ForeignKey(Subsystem, blank=True, null=True, related_name='tables', on_delete=models.SET_NULL,
+                                  verbose_name='子系统', to_field='en_name_abbr')
     database = models.ForeignKey(Database, related_name='tables', on_delete=models.CASCADE, verbose_name='对应库')
     name = models.CharField(max_length=100, verbose_name='表名')
     format = models.CharField(max_length=100, verbose_name='存储格式')

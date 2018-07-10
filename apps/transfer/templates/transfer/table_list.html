@@ -18,6 +18,7 @@
             <th class="text-center">更新时间</th>
             <th class="text-center">是否分区</th>
             <th class="text-center">分区字段</th>
+            <th class="text-center">子系统</th>
             <th class="text-center">对应开发</th>
             <th class="text-center">对应运维</th>
             <th class="text-center">对应业务</th>
@@ -91,20 +92,23 @@ function initTable() {
             {targets: 9, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 10, createdCell: function (td, cellData) {
+            {targets: 10, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData)
+            }},
+            {targets: 11, createdCell: function (td, cellData) {
                 if (!cellData) {
                     $(td).html('<i class="fa fa-times text-danger"></i>')
                 } else {
                     $(td).html('<i class="fa fa-check text-navy"></i>')
                 }
             }},
-            {targets: 11, createdCell: function (td, cellData, rowData) {
+            {targets: 12, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 12, createdCell: function (td, cellData, rowData) {
+            {targets: 13, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(' +0800', ''))
             }},
-            {targets: 13, createdCell: function (td, cellData, rowData) {
+            {targets: 14, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }}
         ],
@@ -117,6 +121,7 @@ function initTable() {
             {data: "table_update_time" },
             {data: "is_partitioned" },
             {data: "partition_field" },
+            {data: "subsystem" },
             {data: "dev" },
             {data: "opr"},
             {data: "bus"},
