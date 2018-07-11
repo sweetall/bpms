@@ -81,7 +81,7 @@ def create_task_name(database_id):
         database = Database.objects.get(id=database_id)
     except Database.DoesNotExist:
         return
-    database_name = database.name
+    database_name = database.__str__()
     task_name = database_name + timezone.localtime(timezone.now()).strftime('-%Y-%m-%d_%H-%M-%S')
     if not PeriodicTask.objects.filter(name=task_name):
         return task_name

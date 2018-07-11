@@ -1,6 +1,7 @@
 # ~*~ coding: utf-8 ~*~
 import uuid
 import os
+import datetime
 
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
@@ -103,9 +104,15 @@ def active_task(request):
     try:
         task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': '任务不存在！'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': False, 'message': '任务不存在！'})
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': '不可操作非自己的任务！'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': False, 'message': '不可操作非自己的任务！'})
+
+    crontab_time = datetime.datetime.strptime(task.schedule.crontab_info, '%Y-%m-%d %H:%M')
+    now_time = datetime.datetime.now()
+    if crontab_time < now_time:
+        return Response({'status': False, 'message': '不可操作已过期的任务！'})
+
     task.enabled = not task.enabled
     task.save()
     return Response({'status': True, 'message': '状态修改成功！'})
@@ -118,8 +125,15 @@ def delete_task(request):
     try:
         task = PeriodicTask.objects.get(name=task_name)
     except PeriodicTask.DoesNotExist:
-        return Response({'status': False, 'message': '任务不存在！'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'status': False, 'message': '任务不存在！'})
+    # can not del other's task
     if task.schedule.creator != request.user:
-        return Response({'status': False, 'message': '不可删除非自己的任务！'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': False, 'message': '不可删除非自己的任务！'})
+    # can not del the task has been executed
+    crontab_time = datetime.datetime.strptime(task.schedule.crontab_info, '%Y-%m-%d %H:%M')
+    now_time = datetime.datetime.now()
+    if crontab_time < now_time and task.total_run_count > 0:
+        return Response({'status': False, 'message': '不可删除已执行的任务！'})
+    # if safe, del it
     task.crontab.delete()
     return Response({'status': True, 'message': '删除成功！'})

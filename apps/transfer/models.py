@@ -90,7 +90,7 @@ class Database(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.name
+        return self.label.value+'-'+self.label.name+'-'+self.name
 
 
 class Table(models.Model):
@@ -121,7 +121,7 @@ class Table(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.database.name + '-' + self.name
+        return self.database.__str__() + '-' + self.name
 
 
 class Field(models.Model):
@@ -181,7 +181,7 @@ class Schedule(UserMixin, DateMixin):
         return '已执行'
 
     class Meta:
-        ordering = ('create_time',)
+        ordering = ('-create_time',)
         verbose_name = '定时任务'
         verbose_name_plural = verbose_name
 
