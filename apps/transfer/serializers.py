@@ -6,7 +6,7 @@ from rest_framework_bulk.serializers import BulkListSerializer
 from django_celery_beat.models import PeriodicTask
 
 from common.mixins import BulkSerializerMixin
-from .models import Database, Table, Field, Schedule, Command
+from .models import Database, Table, Field, TransferSchedule, Command
 
 
 class FieldSerializer(BulkSerializerMixin, serializers.ModelSerializer):
@@ -70,7 +70,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         return obj.kwargs_dict
 
     class Meta:
-        model = Schedule
+        model = TransferSchedule
         fields = '__all__'
 
 

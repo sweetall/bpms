@@ -144,7 +144,7 @@ class Field(models.Model):
         return self.table.__str__() + '-' + self.name
 
 
-class Schedule(UserMixin, DateMixin):
+class TransferSchedule(UserMixin, DateMixin):
     TYPE_CHOICES = (
         (0, '数据导出'),
         (1, '数据导入'),
@@ -196,7 +196,7 @@ class Command(models.Model):
         (2, '执行成功'),
         (3, '执行失败')
     )
-    schedule = models.ForeignKey(Schedule, related_name='commands', on_delete=models.CASCADE, verbose_name='任务')
+    schedule = models.ForeignKey(TransferSchedule, related_name='commands', on_delete=models.CASCADE, verbose_name='任务')
     table = models.ForeignKey(Table, related_name='commands', on_delete=models.CASCADE, verbose_name='表')
     content = models.CharField(max_length=1000, verbose_name='内容')
     status = models.IntegerField(choices=STATUS_CHOICES, default=0, verbose_name='状态')
@@ -214,7 +214,7 @@ class Command(models.Model):
         return self.content
 
 
-@receiver(post_save, sender=Schedule)
+@receiver(post_save, sender=TransferSchedule)
 def create_or_update_command(sender, instance, created, **kwargs):
     task_kwargs = instance.kwargs_dict
     tables = task_kwargs.get('tables', [])

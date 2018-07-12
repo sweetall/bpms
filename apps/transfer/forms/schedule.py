@@ -3,12 +3,17 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
-from transfer.models import Database, Table, Schedule, Command
+from transfer.models import Database, Table, TransferSchedule, Command
 from ..utils import create_or_update_schedule_task, create_import_cmd, create_task_name, create_export_cmd
 from common.utils import get_object_or_none
 
 __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportScheduleCreateForm',
            'ExportScheduleUpdateForm']
+
+# ImportScheduleCreateForm = None
+# ImportScheduleUpdateForm = None
+# ExportScheduleCreateForm = None
+# ExportScheduleUpdateForm = None
 
 
 class ImportScheduleCreateForm(forms.Form):
@@ -115,9 +120,9 @@ class ImportScheduleUpdateForm(forms.Form):
 
 
 class ExportScheduleCreateForm(forms.Form):
-    schedule = forms.ModelChoiceField(queryset=Schedule.objects.filter(type=0), required=True, label='选择任务 *')
+    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0), required=True, label='选择任务 *')
     # schedule = forms.ChoiceField(
-    #     choices=[('0', '--------')]+list(Schedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
+    #     choices=[('0', '--------')]+list(TransferSchedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
     #                                      .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,
@@ -169,9 +174,9 @@ class ExportScheduleCreateForm(forms.Form):
 
 class ExportScheduleUpdateForm(forms.Form):
     name = forms.CharField(widget=forms.HiddenInput)
-    schedule = forms.ModelChoiceField(queryset=Schedule.objects.filter(type=0), required=True, label='选择任务 *')
+    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0), required=True, label='选择任务 *')
     # schedule = forms.ChoiceField(
-    #     choices=[('0', '--------')] + list(Schedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
+    #     choices=[('0', '--------')] + list(TransferSchedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
     #                                        .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,

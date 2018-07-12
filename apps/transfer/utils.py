@@ -7,7 +7,7 @@ from django.db.utils import ProgrammingError, OperationalError
 from django.utils import timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 
-from .models import Schedule, Database, Table, Command
+from .models import TransferSchedule, Database, Table, Command
 
 
 def create_or_update_schedule_task(task):
@@ -44,7 +44,7 @@ def create_or_update_schedule_task(task):
         )
         crontab = CrontabSchedule.objects.create(**kwargs)
     else:
-        raise SyntaxError("Schedule is not valid")
+        raise SyntaxError("TransferSchedule is not valid")
 
     task_defaults = dict(
         crontab=crontab,
@@ -63,10 +63,10 @@ def create_or_update_schedule_task(task):
         comment=task['schedule'].get('comment', '')
     )
     try:
-        schedule = Schedule.objects.get(periodic=periodic_task)
-    except Schedule.DoesNotExist:
+        schedule = TransferSchedule.objects.get(periodic=periodic_task)
+    except TransferSchedule.DoesNotExist:
         schedule_defaults.update(creator=task['schedule'].get('user'))
-        schedule = Schedule.objects.create(**schedule_defaults)
+        schedule = TransferSchedule.objects.create(**schedule_defaults)
     else:
         schedule.type = schedule_defaults['type']
         schedule.comment = schedule_defaults['comment']

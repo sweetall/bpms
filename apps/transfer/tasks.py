@@ -4,7 +4,7 @@ from django_celery_beat.models import PeriodicTask
 
 from common.utils import get_logger
 from common.libs.prmk_client import SSHClient
-from transfer.models import Schedule, Command
+from transfer.models import TransferSchedule, Command
 from assets.models.asset import Asset
 from assets.models.user import SystemUser
 

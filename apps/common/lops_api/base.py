@@ -22,17 +22,17 @@ def auth(token):
         return False, False
 
 
-def send_mail(subject, recipient_list, message='', html_message=None, from_email=None):
+def send_mail(subject, recipient_list, message='', cc_list=None, html_message=None, from_email=None):
     to = ','.join(recipient_list)
-    html = html_message
+    cc = ','.join(cc_list) if cc_list else None
     if not to:
         return {'status': False, 'message': 'Recipient_list can not be none!'}
     payload = {
         'subject': subject,
         'message': message,
         'to': to,
-        'cc': None,
-        'html': html,
+        'cc': cc,
+        'html': html_message,
         'from_email': from_email
     }
     try:

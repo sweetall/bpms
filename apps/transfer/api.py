@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 
 from common.mixins import IDInFilterMixin
 from common.permissions import IsSuperUserOrAppUser, IsValidUser
-from .models import Database, Table, Field, Schedule, Command
+from .models import Database, Table, Field, TransferSchedule, Command
 from .serializers import DatabaseSerializer, TableSerializer, FieldSerializer, ScheduleSerializer, CommandSerializer
 
 
@@ -55,7 +55,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics
     filter_fields = ("periodic", "type")
     search_fields = filter_fields
     ordering_fields = ("create_time", )
-    queryset = Schedule.objects.all()
+    queryset = TransferSchedule.objects.all()
     serializer_class = ScheduleSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsValidUser,)

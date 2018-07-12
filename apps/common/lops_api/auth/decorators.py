@@ -33,7 +33,7 @@ def cookie_check(request):
                 login_ip = get_login_ip(request)
                 user_agent = request.META.get('HTTP_USER_AGENT', '')
                 write_login_log_async.delay(
-                    user.username, type='W',
+                    username=user.username, type='W',
                     ip=login_ip, user_agent=user_agent
                 )
 

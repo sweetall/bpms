@@ -10,7 +10,7 @@ import json
 import uuid
 
 from common.utils import get_object_or_none
-from ..models import Schedule
+from ..models import TransferSchedule
 from transfer.forms.schedule import ImportScheduleCreateForm, ImportScheduleUpdateForm, ExportScheduleCreateForm, \
     ExportScheduleUpdateForm
 from common.const import create_success_msg, update_success_msg
@@ -77,7 +77,7 @@ class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
 
     def get_context_data(self, **kwargs):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
-        schedule = get_object_or_404(Schedule, id=pk)
+        schedule = get_object_or_404(TransferSchedule, id=pk)
         form_default = {}
         name = schedule.periodic.name
         database = json.loads(schedule.periodic.kwargs).get('database')
@@ -168,7 +168,7 @@ class ExportScheduleUpdateView(SuccessMessageMixin, FormView):
 
     def get_context_data(self, **kwargs):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
-        schedule = get_object_or_404(Schedule, id=pk)
+        schedule = get_object_or_404(TransferSchedule, id=pk)
         kwargs = json.loads(schedule.periodic.kwargs)
         form_default = {}
         name = schedule.periodic.name

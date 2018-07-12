@@ -61,11 +61,12 @@ class EmailBackend(BaseEmailBackend):
         message = email_message.message()
         an = email_message.alternatives
         html_message = an[0][0] if an else None
-        cc = ','.join(email_message.cc)
+        # cc = ','.join(email_message.cc)
+        cc = email_message.cc
         subject = email_message.subject
 
-        result = send_mail(subject=subject, to=','.join(recipients), cc=cc, message=message, html=html_message,
-                           from_email=from_email)
+        result = send_mail(subject=subject, recipient_list=recipients, cc_list=cc, message=message,
+                           html_message=html_message, from_email=from_email)
         return result['status']
 
 
