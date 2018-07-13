@@ -84,7 +84,7 @@
 
     function initTables(schedule_id) {
         $.ajax({
-            url: "{% url 'api-transfer:command-list' %}" + '?schedule=' + schedule_id,
+            url: "{% url 'api-transfer:command-list' %}" + '?schedule=' + schedule_id + '&status=2',
             method: 'GET',
             data: {},
             dataType: "json",

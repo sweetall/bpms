@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import PeriodicTask
+from django.utils.translation import ugettext_lazy as _
 
 from common.mixins import UserMixin, DateMixin
 from assets.models.label import Label
@@ -146,8 +147,8 @@ class Field(models.Model):
 
 class TransferSchedule(UserMixin, DateMixin):
     TYPE_CHOICES = (
-        (0, '数据导出'),
-        (1, '数据导入'),
+        (0, _('Transfer in')),
+        (1, _('Transfer out')),
     )
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     periodic = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, verbose_name='任务')
@@ -176,7 +177,7 @@ class TransferSchedule(UserMixin, DateMixin):
             if self.periodic.enabled:
                 return '等待执行'
             return '取消执行'
-        if self.commands.filter(status=0):
+        if self.periodic.total_run_count == 0:
             return '过期未执行'
         return '已执行'
 

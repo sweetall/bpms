@@ -92,11 +92,13 @@ def create_task_name(database_id):
             return task_name
 
 
-def create_import_cmd(database_id, tables_id_list):
+def create_transfer_cmd(database_id, tables_id_list):
     try:
         database = Database.objects.get(id=database_id)
     except Database.DoesNotExist:
         return []
+    asset = database.label.assets.first()
+    cmd_format = asset.comment
     cmd = []
     database_name = database.name
     for table_id in tables_id_list:
@@ -106,28 +108,7 @@ def create_import_cmd(database_id, tables_id_list):
             break
         table_name = table.name
         cmd.append(
-            '/appdata/hadoopbak/shell/bachBackupHdfs.sh /user/hive/warehouse/{db}/{table}'.format(
+            cmd_format.format(
                 db=database_name, table=table_name)
         )
     return cmd
-
-
-def create_export_cmd(database_id, tables_id_list):
-    try:
-        database = Database.objects.get(id=database_id)
-    except Database.DoesNotExist:
-        return []
-    cmd = []
-    database_name = database.name
-    for table_id in tables_id_list:
-        try:
-            table = Table.objects.get(id=table_id)
-        except Table.DoesNotExist:
-            break
-        table_name = table.name
-        cmd.append(
-            '/appdata/hadoopbak/shell/bachBackup.sh /appdata/hadoopbak/user/hive/warehouse/{db}/{table}'.format(
-                db=database_name, table=table_name)
-        )
-    return cmd
-

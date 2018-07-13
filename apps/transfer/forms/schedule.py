@@ -4,8 +4,9 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
 from transfer.models import Database, Table, TransferSchedule, Command
-from ..utils import create_or_update_schedule_task, create_import_cmd, create_task_name, create_export_cmd
+from ..utils import create_or_update_schedule_task, create_task_name, create_transfer_cmd
 from common.utils import get_object_or_none
+from assets.models.label import Label
 
 __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportScheduleCreateForm',
            'ExportScheduleUpdateForm']
@@ -19,9 +20,6 @@ __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportSchedu
 class ImportScheduleCreateForm(forms.Form):
     database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, label__value='生产环境'),
                                       required=True, label='选择库 *')
-    # database = forms.ChoiceField(
-    #     choices=[('0', '--------')]+list(Database.objects.filter(is_active=True).values_list('id', 'name')),
-    #     required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
         label='选择表 *', choices=list(Table.objects.filter(is_active=True).values_list('id', 'name')),
@@ -47,17 +45,17 @@ class ImportScheduleCreateForm(forms.Form):
         task_name = create_task_name(database_id)
         task_info = {
             'name': task_name,
-            'task': '',  # A registered celery task,
+            'task': 'transfer.tasks.execute_transfer_task',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
                 'database': database_id,
                 'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_import_cmd(database_id, tables_id_list),
+                'cmd': create_transfer_cmd(database_id, tables_id_list),
                 'task_name': task_name,
             },
-            'enabled': False,
+            'enabled': True,
             'schedule': {
                 'type': 0,
                 'comment': self.cleaned_data.get('comment'),
@@ -71,9 +69,6 @@ class ImportScheduleUpdateForm(forms.Form):
     name = forms.CharField(widget=forms.HiddenInput)
     database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, label__value='生产环境'),
                                       required=True, label='选择库 *')
-    # database = forms.ChoiceField(
-    #     choices=[('0', '--------')]+list(Database.objects.filter(is_active=True).values_list('id', 'name')),
-    #     required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
         label='选择表 *', choices=list(Table.objects.filter(is_active=True).values_list('id', 'name')),
@@ -99,17 +94,17 @@ class ImportScheduleUpdateForm(forms.Form):
         task_name = self.cleaned_data.get('name')
         task_info = {
             'name': task_name,
-            'task': '',  # A registered celery task,
+            'task': 'transfer.tasks.execute_transfer_task',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
                 'database': database_id,
                 'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_import_cmd(database_id, tables_id_list),
+                'cmd': create_transfer_cmd(database_id, tables_id_list),
                 'task_name': task_name,
             },
-            'enabled': False,
+            'enabled': True,
             'schedule': {
                 'type': 0,
                 'comment': self.cleaned_data.get('comment'),
@@ -120,13 +115,11 @@ class ImportScheduleUpdateForm(forms.Form):
 
 
 class ExportScheduleCreateForm(forms.Form):
-    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0), required=True, label='选择任务 *')
-    # schedule = forms.ChoiceField(
-    #     choices=[('0', '--------')]+list(TransferSchedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
-    #                                      .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
+    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0, periodic__total_run_count__gte=1),
+                                      required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,
-        label='选择表 *', choices=list(set(Command.objects.filter(status=0)  # 2
+        label='选择表 *', choices=list(set(Command.objects.filter(status=2)  # 2
                                     .values_list('table__id', 'table__name'))),
         widget=forms.SelectMultiple(
             attrs={
@@ -146,19 +139,20 @@ class ExportScheduleCreateForm(forms.Form):
 
     def save(self, request):
         from_schedule = self.cleaned_data['schedule']
-        database_id = json.loads(from_schedule.periodic.kwargs).get('database', '')
+        database_name = Database.objects.get(id=json.loads(from_schedule.periodic.kwargs).get('database', '')).name
+        database_id = str(Database.objects.filter(label__value='测试环境', name=database_name).first().id)
         tables_id_list = self.cleaned_data.get('tables')
         task_name = create_task_name(database_id)
         task_info = {
             'name': task_name,
-            'task': '',  # A registered celery task,
+            'task': 'transfer.tasks.execute_transfer_task',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
                 'database': database_id,
                 'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_export_cmd(database_id, tables_id_list),
+                'cmd': create_transfer_cmd(database_id, tables_id_list),
                 'task_name': task_name,
                 'from_schedule_id': str(from_schedule.id),
             },
@@ -174,13 +168,11 @@ class ExportScheduleCreateForm(forms.Form):
 
 class ExportScheduleUpdateForm(forms.Form):
     name = forms.CharField(widget=forms.HiddenInput)
-    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0), required=True, label='选择任务 *')
-    # schedule = forms.ChoiceField(
-    #     choices=[('0', '--------')] + list(TransferSchedule.objects.filter(type=0)  # , periodic__total_run_count__gte=1)
-    #                                        .values_list('id', 'periodic__name')), required=True, label='选择任务 *')
+    schedule = forms.ModelChoiceField(queryset=TransferSchedule.objects.filter(type=0, periodic__total_run_count__gte=1),
+                                      required=True, label='选择任务 *')
     tables = forms.MultipleChoiceField(
         required=True,
-        label='选择表 *', choices=list(set(Command.objects.filter(status=0)  # 2
+        label='选择表 *', choices=list(set(Command.objects.filter(status=2)  # 2
                                         .values_list('table__id', 'table__name'))),
         widget=forms.SelectMultiple(
             attrs={
@@ -200,19 +192,20 @@ class ExportScheduleUpdateForm(forms.Form):
 
     def save(self, request):
         from_schedule = self.cleaned_data['schedule']
-        database_id = json.loads(from_schedule.periodic.kwargs).get('database', '')
+        database_name = Database.objects.get(id=json.loads(from_schedule.periodic.kwargs).get('database', '')).name
+        database_id = str(Database.objects.filter(label__value='测试环境', name=database_name).first().id)
         tables_id_list = self.cleaned_data.get('tables')
         task_name = self.cleaned_data.get('name')
         task_info = {
             'name': task_name,
-            'task': '',  # A registered celery task,
+            'task': 'transfer.tasks.execute_transfer_task',  # A registered celery task,
             'crontab': self.cleaned_data.get('crontab')[:-4] + '*',
             'args': (),
             'kwargs': {
                 'database': database_id,
                 'tables': tables_id_list,
                 'year': self.cleaned_data.get('crontab')[-4:],
-                'cmd': create_export_cmd(database_id, tables_id_list),
+                'cmd': create_transfer_cmd(database_id, tables_id_list),
                 'task_name': task_name,
                 'from_schedule_id': str(from_schedule.id),
             },

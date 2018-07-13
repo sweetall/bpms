@@ -4,35 +4,48 @@ from django_celery_beat.models import PeriodicTask
 
 from common.utils import get_logger
 from common.libs.prmk_client import SSHClient
-from transfer.models import TransferSchedule, Command
+from common.tasks import send_mail_async
 from assets.models.asset import Asset
-from assets.models.user import SystemUser
+from .models import Database
 
 logger = get_logger(__file__)
 
 
 @shared_task
-def transfer_import_task(*args, **kwargs):
+def execute_transfer_task(*args, **kwargs):
     task_name = kwargs.get('task_name')
-    schedule = PeriodicTask.objects.get(name=task_name).schedule
-    command_list = schedule.commands
-    for command in command_list:
-        cmd = command.content
-        execute_command.delay(ip='', cmd=cmd)
-        command.status = 1
-        command.save()
+    schedule = PeriodicTask.objects.get(name=task_name).transferschedule
+    command_list = schedule.commands.all()
+    ip = Database.objects.get(id=kwargs.get('database')).label.assets.first().ip
+    result = execute_command(ip=ip, command_list=command_list)
+    if result:
+        send_mail_async('[生产-NAS]任务下发通知', '您的[生产-NAS]任务 %s 已下发，请知晓~' % task_name, [schedule.creator.email])
 
 
-@shared_task
-def execute_command(ip, cmd):
+# @shared_task
+def execute_command(ip, command_list):
     asset = Asset.objects.get(ip=ip)
-    system_user = asset.systemuser_set[0]
+    system_user = asset.systemuser_set.first()
     username = system_user.username
     password = system_user.password
     ssh = SSHClient(hostname=ip, port=22, username=username, password=password)
-    ssh.connect()
-    ssh.run_cmd(cmd=cmd)
+    for i in range(3):
+        ssh.connect()
+        if ssh.client_state:
+            break
+    else:
+        if not ssh.client_state:
+            return False
+    for command in command_list:
+        cmd = command.content
+        # to do 确定返回值，判断执行结果
+        result = ssh.run_cmd(cmd=cmd)
+        print('*'*40)
+        command.status = 1
+        command.machine = ip
+        command.save()
     ssh.close()
+    return True
 
 
 # 1 下发命令 写入标记

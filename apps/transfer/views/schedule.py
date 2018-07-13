@@ -172,13 +172,13 @@ class ExportScheduleUpdateView(SuccessMessageMixin, FormView):
         kwargs = json.loads(schedule.periodic.kwargs)
         form_default = {}
         name = schedule.periodic.name
-        database = kwargs.get('from_schedule_id')
+        from_schedule_id = kwargs.get('from_schedule_id')
         tables = kwargs.get('tables')
         year = kwargs.get('year')
         crontab = schedule.periodic.crontab
         comment = schedule.comment
         form_default["name"] = name
-        form_default["database"] = database
+        form_default["schedule"] = from_schedule_id
         form_default["tables"] = tables
         form_default['crontab'] = year + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + \
                                   crontab.hour + ':' + crontab.minute
@@ -189,7 +189,7 @@ class ExportScheduleUpdateView(SuccessMessageMixin, FormView):
             'app': _('Transfer'),
             'action': _('Transfer out update'),
             'form': form,
-            'schedule_id': database,
+            'schedule_id': from_schedule_id,
             'tables': ' '.join(tables),
         }
         kwargs.update(context)

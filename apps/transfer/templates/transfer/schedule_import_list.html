@@ -63,14 +63,14 @@ function initTable() {
                 if (cellData.enabled){
                     active_info = '取 消'
                 }
-                var active_disable = ' disabled';
-                if ((rowData.status_info === '等待执行')||(rowData.status_info === '取消执行')){
-                    active_disable = ''
+                var active_disable = '';
+                if (rowData.status_info === '已执行'){
+                    active_disable = ' disabled'
                 }
                 $(td).html(
                     '<div class="btn-group">' +
                         '<button class="btn btn-success btn-xs" onclick="activeSchedule(\'' + cellData.name + '\')"' + active_disable + '>' + active_info + '</button>' +
-                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(\'' + cellData.name + '\')">删 除</button>' +
+                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(\'' + cellData.name + '\')"' + active_disable + '>删 除</button>' +
                     '</div>'
                 )
             }}

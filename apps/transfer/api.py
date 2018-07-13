@@ -68,7 +68,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics
 
 
 class CommandViewSet(viewsets.ModelViewSet):
-    filter_fields = ('schedule', 'table')
+    filter_fields = ('schedule', 'table', 'status')
     ordering_fields = ("id",)
     search_fields = filter_fields
     queryset = Command.objects.all()

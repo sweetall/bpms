@@ -1,6 +1,8 @@
 import requests
 import logging
 
+from django.core.mail import send_mail as send_mail_def
+
 
 from django.conf import settings
 
@@ -10,7 +12,6 @@ logger = logging.getLogger('bpms')
 def auth(token):
     payload = {'key': token}
     try:
-        print(settings.LOPS_AUTH_API)
         r = requests.post(settings.LOPS_AUTH_API, data=payload)
         data = r.json()
         if data['status']:
@@ -22,7 +23,7 @@ def auth(token):
         return False, False
 
 
-def send_mail(subject, recipient_list, message='', cc_list=None, html_message=None, from_email=None):
+def send_mail(subject, message, from_email, recipient_list, cc_list=None, html_message=None):
     to = ','.join(recipient_list)
     cc = ','.join(cc_list) if cc_list else None
     if not to:
@@ -48,3 +49,5 @@ def send_mail(subject, recipient_list, message='', cc_list=None, html_message=No
         return {'status': False, 'message': str(err)}
 
 
+if not settings.LOPS_AUTH:
+    send_mail = send_mail_def
