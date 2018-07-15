@@ -14,6 +14,7 @@ from ..models import TransferSchedule
 from transfer.forms.schedule import ImportScheduleCreateForm, ImportScheduleUpdateForm, ExportScheduleCreateForm, \
     ExportScheduleUpdateForm
 from common.const import create_success_msg, update_success_msg
+from ..utils import ScheduleEditableAccessMixin
 
 
 class ImportScheduleListView(LoginRequiredMixin, TemplateView):
@@ -64,7 +65,7 @@ class ImportScheduleCreateView(SuccessMessageMixin, FormView):
             return self.form_invalid(form)
 
 
-class ImportScheduleUpdateView(SuccessMessageMixin, FormView):
+class ImportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin, FormView):
     initial = {}
     form_class = ImportScheduleUpdateForm
     template_name = 'transfer/schedule_import_update.html'
@@ -155,7 +156,7 @@ class ExportScheduleCreateView(SuccessMessageMixin, FormView):
             return self.form_invalid(form)
 
 
-class ExportScheduleUpdateView(SuccessMessageMixin, FormView):
+class ExportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin, FormView):
     initial = {}
     form_class = ExportScheduleUpdateForm
     template_name = 'transfer/schedule_export_update.html'

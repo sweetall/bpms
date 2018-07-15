@@ -335,7 +335,7 @@ AUTHENTICATION_BACKENDS = [
 
 ADMINS = CONFIG.ADMINS
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Custom User Auth model
 AUTH_USER_MODEL = 'users.User'

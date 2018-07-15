@@ -3,9 +3,14 @@ import random
 import string
 from functools import wraps
 
+from django.contrib.auth.mixins import AccessMixin
 from django.db.utils import ProgrammingError, OperationalError
 from django.utils import timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
+from django.shortcuts import reverse, get_object_or_404
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy
 
 from .models import TransferSchedule, Database, Table, Command
 
@@ -112,3 +117,20 @@ def create_transfer_cmd(database_id, tables_id_list):
                 db=database_name, table=table_name)
         )
     return cmd
+
+
+# check the schedule has ran or not, if has ran more than 1 times, can't edit it
+class ScheduleEditableAccessMixin(AccessMixin):
+    def editable(self):
+        pk = self.request.META.get("PATH_INFO").split('/')[-3]
+        schedule = get_object_or_404(TransferSchedule, id=pk)
+        if schedule.periodic.total_run_count > 0:
+            return False
+        return True
+
+    def dispatch(self, request, *args, **kwargs):
+        schedule_type = self.request.META.get("PATH_INFO").split('/')[-4]
+        if not self.editable():
+            messages.error(request, '不可编辑 已执行 的任务！')
+            return HttpResponseRedirect(reverse_lazy('transfer:%s-list' % schedule_type))
+        return super().dispatch(request, *args, **kwargs)

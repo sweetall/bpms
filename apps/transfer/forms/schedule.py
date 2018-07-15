@@ -156,7 +156,7 @@ class ExportScheduleCreateForm(forms.Form):
                 'task_name': task_name,
                 'from_schedule_id': str(from_schedule.id),
             },
-            'enabled': False,
+            'enabled': True,
             'schedule': {
                 'type': 1,
                 'comment': self.cleaned_data.get('comment'),
@@ -209,7 +209,7 @@ class ExportScheduleUpdateForm(forms.Form):
                 'task_name': task_name,
                 'from_schedule_id': str(from_schedule.id),
             },
-            'enabled': False,
+            'enabled': True,
             'schedule': {
                 'type': 1,
                 'comment': self.cleaned_data.get('comment'),
