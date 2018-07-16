@@ -111,7 +111,7 @@ def active_task(request):
     crontab_time = datetime.datetime.strptime(task.transferschedule.crontab_info, '%Y-%m-%d %H:%M')
     now_time = datetime.datetime.now()
     if crontab_time < now_time:
-        return Response({'status': False, 'message': '不可操作已过期的任务！'})
+        return Response({'status': False, 'message': '不可激活已过期的任务！'})
 
     task.enabled = not task.enabled
     task.save()

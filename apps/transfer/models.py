@@ -178,6 +178,9 @@ class TransferSchedule(UserMixin, DateMixin):
                 return '等待执行'
             return '取消执行'
         if self.periodic.total_run_count == 0:
+            if self.periodic.enabled:
+                self.periodic.enabled = False
+                self.periodic.save()
             return '过期未执行'
         return '已执行'
 
