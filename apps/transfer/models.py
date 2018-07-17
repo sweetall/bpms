@@ -77,6 +77,8 @@ class Database(models.Model):
     dev = models.CharField(blank=True, max_length=100, verbose_name='对应开发')
     opr = models.CharField(blank=True, max_length=100, verbose_name='对应运维')
     bus = models.CharField(blank=True, max_length=100, verbose_name='对应业务')
+    user_owner = models.CharField(blank=True, max_length=100, verbose_name='属主用户')
+    user_share = models.CharField(blank=True, max_length=200, verbose_name='授权用户')
     comment = models.TextField(max_length=200, default='', blank=True, verbose_name='备注')
     modifier = models.CharField(default='Admin', blank=True, max_length=50, verbose_name='最近修改人')
     modify_time = models.DateTimeField(blank=True, editable=False, auto_now=True)

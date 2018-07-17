@@ -28,6 +28,8 @@
             <th class="text-center">对应开发</th>
             <th class="text-center">对应运维</th>
             <th class="text-center">对应业务</th>
+            <th class="text-center">属主用户</th>
+            <th class="text-center">授权用户</th>
             <th class="text-center">是否可用</th>
             <th class="text-center">最近修改人</th>
             <th class="text-center">修改时间</th>
@@ -88,28 +90,34 @@ function initTable() {
             {targets: 6, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 7, createdCell: function (td, cellData) {
+            {targets: 7, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData)
+            }},
+            {targets: 8, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData)
+            }},
+            {targets: 9, createdCell: function (td, cellData) {
                 if (!cellData) {
                     $(td).html('<i class="fa fa-times text-danger"></i>')
                 } else {
                     $(td).html('<i class="fa fa-check text-navy"></i>')
                 }
             }},
-            {targets: 8, createdCell: function (td, cellData, rowData) {
+            {targets: 10, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 9, createdCell: function (td, cellData, rowData) {
+            {targets: 11, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(' +0800', ''))
             }},
-            {targets: 10, createdCell: function (td, cellData, rowData) {
+            {targets: 12, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }}
         ],
         ajax_url: '{% url "api-transfer:database-list" %}',
         columns: [
             {data: "id"}, {data: "name"}, {data: "quota" }, {data: "label_info" }, {data: "dev" }, {data: "opr"},
-            {data: "bus"}, {data: "is_active", orderable: false }, {data: "modifier"}, {data: "modify_time"},
-            {data: "comment", orderable: false}
+            {data: "bus"}, {data: "user_owner"}, {data: "user_share"}, {data: "is_active", orderable: false },
+            {data: "modifier"}, {data: "modify_time"}, {data: "comment", orderable: false}
         ],
         op_html: $('#actions').html()
     };
