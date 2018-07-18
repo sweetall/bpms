@@ -93,6 +93,12 @@ class Asset(models.Model):
     labels = models.ManyToManyField('assets.Label', blank=True, related_name='assets', verbose_name=_("Labels"))
     created_by = models.CharField(max_length=32, null=True, blank=True, verbose_name=_('Created by'))
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_('Date created'))
+
+    # add for transfer
+    cmd_format = models.CharField(max_length=200, null=True, blank=True, verbose_name='命令格式')
+    log_dir = models.CharField(max_length=200, null=True, blank=True, verbose_name='日志路径')
+    max_con = models.IntegerField(default=50, verbose_name='最大并发')
+
     comment = models.TextField(max_length=128, default='', blank=True, verbose_name=_('Comment'))
 
     objects = AssetManager()

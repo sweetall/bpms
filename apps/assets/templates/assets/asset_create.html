@@ -57,6 +57,9 @@
 
     <div class="hr-line-dashed"></div>
     <h3>{% trans 'Other' %}</h3>
+    {% bootstrap_field form.cmd_format layout="horizontal" %}
+    {% bootstrap_field form.log_dir layout="horizontal" %}
+    {% bootstrap_field form.max_con layout="horizontal" %}
     {% bootstrap_field form.comment layout="horizontal" %}
     {% bootstrap_field form.is_active layout="horizontal" %}
 
