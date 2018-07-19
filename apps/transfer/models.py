@@ -3,6 +3,7 @@ import json
 import datetime
 
 from django.db import models
+from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import PeriodicTask
@@ -70,9 +71,6 @@ class Database(models.Model):
                               verbose_name='标签')
     name = models.CharField(max_length=100, verbose_name='库名')
     quota = models.IntegerField(verbose_name='配额')
-    # used = models.IntegerField(verbose_name='使用量')
-    # daily_increase = models.IntegerField(blank=True, verbose_name='日增量')
-
     is_active = models.BooleanField(default=True, verbose_name='是否可用')
     dev = models.CharField(blank=True, max_length=100, verbose_name='对应开发')
     opr = models.CharField(blank=True, max_length=100, verbose_name='对应运维')
@@ -96,6 +94,22 @@ class Database(models.Model):
         return self.label.value+'-'+self.label.name+'-'+self.name
 
 
+# class DatabaseInfo(models.Model):
+#     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+#     database = models.OneToOneField(Database, null=True, on_delete=models.CASCADE, verbose_name='对应库')
+#     quota = models.CharField(blank=True, max_length=100, verbose_name='配额')
+#     used = models.CharField(blank=True, max_length=100, verbose_name='使用量')
+#     daily_increase = models.CharField(blank=True, max_length=100, verbose_name='日增量')
+#
+#     class Meta:
+#         ordering = ('database', )
+#         verbose_name = '库信息'
+#         verbose_name_plural = verbose_name
+#
+#     def __str__(self):
+#         return self.database.__str__()
+
+
 class Table(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     subsystem = models.ForeignKey(Subsystem, blank=True, null=True, related_name='tables', on_delete=models.SET_NULL,
@@ -107,9 +121,6 @@ class Table(models.Model):
     table_update_time = models.CharField(max_length=100, verbose_name='更新时间')
     is_partitioned = models.BooleanField(default=False, verbose_name='是否分区')
     partition_field = models.CharField(max_length=100, blank=True, verbose_name='分区字段')
-    # size = models.IntegerField(blank=True, verbose_name='大小(byte)')
-    # daily_increase = models.IntegerField(blank=True, verbose_name='日增量')
-
     is_active = models.BooleanField(default=True, verbose_name='是否可用')
     dev = models.CharField(blank=True, max_length=100, verbose_name='对应开发')
     opr = models.CharField(blank=True, max_length=100, verbose_name='对应运维')
@@ -125,6 +136,21 @@ class Table(models.Model):
 
     def __str__(self):
         return self.database.__str__() + '-' + self.name
+
+
+# class TableInfo(models.Model):
+#     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+#     table = models.OneToOneField(Table, null=True, on_delete=models.CASCADE, verbose_name='对应表')
+#     size = models.CharField(blank=True, max_length=100, verbose_name='大小')
+#     daily_increase = models.CharField(blank=True, max_length=100, verbose_name='日增量')
+#
+#     class Meta:
+#         ordering = ('table', )
+#         verbose_name = '表信息'
+#         verbose_name_plural = verbose_name
+#
+#     def __str__(self):
+#         return self.table.__str__()
 
 
 class Field(models.Model):
@@ -152,39 +178,36 @@ class TransferSchedule(UserMixin, DateMixin):
         (0, _('Transfer in')),
         (1, _('Transfer out')),
     )
+    STATUS_CHOICES = (
+        (0, '等待执行'),
+        (1, '取消执行'),
+        (2, '排队中..'),
+        (3, '已下发..'),
+        (4, '执行完成'),
+    )
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    periodic = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, verbose_name='任务')
+    database = models.ForeignKey(Database, blank=True, on_delete=models.CASCADE, verbose_name='对应库')
+    name = models.CharField(max_length=200, unique=True, verbose_name='任务名称')
+    run_time = models.DateTimeField(verbose_name='执行时间')
     type = models.IntegerField(choices=TYPE_CHOICES, verbose_name='类型')
+    status = models.IntegerField(choices=STATUS_CHOICES, default=0, verbose_name='状态')
+    from_schedule = models.CharField(max_length=200, blank=True, verbose_name='源任务')
     comment = models.TextField(max_length=200, verbose_name='备注')
-
-    @property
-    def crontab_info(self):
-        crontab = self.periodic.crontab
-        k = json.loads(self.periodic.kwargs).get('year', '')
-        return k + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + crontab.hour + ':' + crontab.minute
 
     @property
     def type_info(self):
         return self.TYPE_CHOICES[self.type][-1]
 
     @property
-    def kwargs_dict(self):
-        return json.loads(self.periodic.kwargs)
+    def status_info(self):
+        if self.status == 0 and self.run_time <= timezone.now():
+            self.status = 2
+            self.save(update_fields=['status'])
+        return self.STATUS_CHOICES[self.status][-1]
 
     @property
-    def status_info(self):
-        crontab_time = datetime.datetime.strptime(self.crontab_info, '%Y-%m-%d %H:%M')
-        now_time = datetime.datetime.now()
-        if crontab_time > now_time:
-            if self.periodic.enabled:
-                return '等待执行'
-            return '取消执行'
-        if self.periodic.total_run_count == 0:
-            if self.periodic.enabled:
-                self.periodic.enabled = False
-                self.periodic.save()
-            return '过期未执行'
-        return '已执行'
+    def command_list(self):
+        return self.commands.values_list('content')
 
     class Meta:
         ordering = ('-create_time',)
@@ -192,7 +215,7 @@ class TransferSchedule(UserMixin, DateMixin):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.periodic.name
+        return self.name
 
 
 class Command(models.Model):
@@ -202,6 +225,7 @@ class Command(models.Model):
         (2, '执行成功'),
         (3, '执行失败')
     )
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     schedule = models.ForeignKey(TransferSchedule, related_name='commands', on_delete=models.CASCADE, verbose_name='任务')
     table = models.ForeignKey(Table, related_name='commands', on_delete=models.CASCADE, verbose_name='表')
     content = models.CharField(max_length=1000, verbose_name='内容')
@@ -212,7 +236,7 @@ class Command(models.Model):
         return self.STATUS_CHOICES[self.status][-1]
 
     class Meta:
-        ordering = ('schedule',)
+        ordering = ('schedule__run_time', 'schedule__create_time')
         verbose_name = '命令'
         verbose_name_plural = verbose_name
 
@@ -220,28 +244,41 @@ class Command(models.Model):
         return self.content
 
 
-@receiver(post_save, sender=TransferSchedule)
-def create_or_update_command(sender, instance, created, **kwargs):
-    task_kwargs = instance.kwargs_dict
-    tables = task_kwargs.get('tables', [])
-    cmd = task_kwargs.get('cmd', [])
-    commands = instance.commands
-    if not commands:
-        for i, table_id in enumerate(tables):
-            content = cmd[i]
-            Command.objects.create(
-                schedule=instance,
-                table_id=table_id,
-                content=content
-            )
-    else:
-        commands.exclude(table_id__in=tables).delete()
-        exist_tables_list = [str(x['table_id']) for x in commands.values('table_id', )]
-        tables_list = list(filter(lambda x: x not in exist_tables_list, tables))
-        for table_id in tables_list:
-            content = cmd[tables.index(table_id)]
-            Command.objects.create(
-                schedule=instance,
-                table_id=table_id,
-                content=content
-            )
+@receiver(post_save, sender=Command)
+def update_schedule_status(sender, instance, created, **kwargs):
+    if not created:
+        schedule = instance.schedule
+        status = list(set([item[0] for item in schedule.commands.values_list('status')]))
+        if len(status) == 1 and status[0] == 1:
+            schedule.status = 3
+            schedule.save(update_fields=['status'])
+        elif 0 not in status and 1 not in status:
+            schedule.status = 4
+            schedule.save(update_fields=['status'])
+
+
+# @receiver(post_save, sender=TransferSchedule)
+# def create_or_update_command(sender, instance, created, **kwargs):
+#     task_kwargs = instance.kwargs_dict
+#     tables = task_kwargs.get('tables', [])
+#     cmd = task_kwargs.get('cmd', [])
+#     commands = instance.commands
+#     if not commands:
+#         for i, table_id in enumerate(tables):
+#             content = cmd[i]
+#             Command.objects.create(
+#                 schedule=instance,
+#                 table_id=table_id,
+#                 content=content
+#             )
+#     else:
+#         commands.exclude(table_id__in=tables).delete()
+#         exist_tables_list = [str(x['table_id']) for x in commands.values('table_id', )]
+#         tables_list = list(filter(lambda x: x not in exist_tables_list, tables))
+#         for table_id in tables_list:
+#             content = cmd[tables.index(table_id)]
+#             Command.objects.create(
+#                 schedule=instance,
+#                 table_id=table_id,
+#                 content=content
+#             )

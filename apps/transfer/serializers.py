@@ -39,23 +39,18 @@ class DatabaseSerializer(BulkSerializerMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PeriodicTaskSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = PeriodicTask
-        fields = '__all__'
+# class PeriodicTaskSerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = PeriodicTask
+#         fields = '__all__'
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    periodic = PeriodicTaskSerializer(read_only=True)
-    crontab_info = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     type_info = serializers.SerializerMethodField()
     status_info = serializers.SerializerMethodField()
-    kwargs_dict = serializers.SerializerMethodField()
-
-    def get_crontab_info(self, obj):
-        return obj.crontab_info
+    command_list = serializers.SerializerMethodField()
 
     def get_creator(self, obj):
         return obj.creator.username
@@ -66,8 +61,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
     def get_status_info(self, obj):
         return obj.status_info
 
-    def get_kwargs_dict(self, obj):
-        return obj.kwargs_dict
+    def get_command_list(self, obj):
+        return obj.command_list
 
     class Meta:
         model = TransferSchedule

@@ -1,6 +1,11 @@
+import datetime
+
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework_bulk import BulkModelViewSet, ListBulkCreateUpdateAPIView
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.views import Response
 from django.shortcuts import get_object_or_404
 
 from common.mixins import IDInFilterMixin
@@ -52,7 +57,7 @@ class FieldViewSet(IDInFilterMixin, BulkModelViewSet):
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):  # mixins.ListModelMixin, generics.GenericAPIView
-    filter_fields = ("periodic", "type")
+    filter_fields = ("database", "type")
     search_fields = filter_fields
     ordering_fields = ("create_time", )
     queryset = TransferSchedule.objects.all()
@@ -87,3 +92,46 @@ class UserCommandViewSet(CommandViewSet):
         if self.request.user.is_superuser:
             return super().get_queryset()
         return super().get_queryset().filter(schedule__creator=self.request.user)
+
+
+# add
+@api_view(['POST'])
+@permission_classes((IsValidUser, ))
+def active_transfer_task(request):
+    task_id = request.data.get('task_id')
+    try:
+        task = TransferSchedule.objects.get(id=task_id)
+    except TransferSchedule.DoesNotExist:
+        return Response({'status': False, 'message': '任务不存在！'})
+    if task.creator != request.user:
+        return Response({'status': False, 'message': '不可操作非自己的任务！'})
+
+    run_time = task.run_time
+    now_time = timezone.now()
+    if run_time < now_time:
+        return Response({'status': False, 'message': '不可操作已过期的任务！'})
+
+    task.status = 0 if task.status else 1
+    task.save(update_fields=['status'])
+    return Response({'status': True, 'message': '状态修改成功！'})
+
+
+@api_view(['POST'])
+@permission_classes((IsValidUser, ))
+def delete_transfer_task(request):
+    task_id = request.data.get('task_id')
+    try:
+        task = TransferSchedule.objects.get(id=task_id)
+    except TransferSchedule.DoesNotExist:
+        return Response({'status': False, 'message': '任务不存在！'})
+    # can not del other's task
+    if task.creator != request.user:
+        return Response({'status': False, 'message': '不可删除非自己的任务！'})
+    # can not del the task has been executed
+    run_time = task.run_time
+    now_time = timezone.now()
+    if run_time < now_time and task.status > 1:
+        return Response({'status': False, 'message': '不可删除此任务！'})
+    # if safe, del it
+    task.delete()
+    return Response({'status': True, 'message': '删除成功！'})

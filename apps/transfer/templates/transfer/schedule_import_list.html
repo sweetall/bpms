@@ -7,7 +7,8 @@
 <table class="table table-striped table-bordered table-hover " id="schedule_list_table" style="width: 100%">
     <thead>
         <tr>
-            <th class="text-center">任务名 </th>
+            <th class="text-center">ID</th>
+            <th class="text-center">任务名</th>
             <th class="text-center">命令</th>
             <th class="text-center">执行时间</th>
             <th class="text-center">状态</th>
@@ -31,60 +32,65 @@ function initTable() {
         ele: $('#schedule_list_table'),
         columnDefs: [
             {targets: 0, createdCell: function (td, cellData, rowData) {
-                var detail_btn = '<a href="{% url 'transfer:schedule-import-update' pk=DEFAULT_PK %}">' + cellData.name + '</a>';
-                $(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));
+                $(td).html(cellData)
             }},
             {targets: 1, createdCell: function (td, cellData, rowData) {
+                var detail_btn = '<a href="{% url 'transfer:schedule-import-update' pk=DEFAULT_PK %}">' + cellData + '</a>';
+                $(td).html(detail_btn.replace("{{ DEFAULT_PK }}", rowData.id));
+            }},
+            {targets: 2, createdCell: function (td, cellData, rowData) {
                 var html_info = '';
-                for (var i in cellData.cmd){
-                    html_info += cellData.cmd[i] + '</br>'
+                for (var i in cellData){
+                    html_info += cellData[i] + '</br>'
                 }
                 $(td).html(html_info);
             }},
-            {targets: 2, createdCell: function (td, cellData) {
-                $(td).html(cellData)
-            }},
             {targets: 3, createdCell: function (td, cellData) {
+                $(td).html(cellData.replace(' +0800', ''))
+            }},
+            {targets: 4, createdCell: function (td, cellData) {
                 $(td).html(
                     '<span class="label label-primary">' + cellData + '</span>'
                 )
             }},
-            {targets: 4, createdCell: function (td, cellData, rowData) {
+            {targets: 5, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
-            {targets: 5, createdCell: function (td, cellData, rowData) {
+            {targets: 6, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(' +0800', ''))
             }},
-            {targets: 6, createdCell: function (td, cellData, rowData) {
+            {targets: 7, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.replace(/\n/g, '<br>'))
             }},
-            {targets: 7, createdCell: function (td, cellData, rowData) {
-                var active_info = '激 活';
-                if (cellData.enabled){
+            {targets: 8, createdCell: function (td, cellData, rowData) {
+                var active_info = null;
+                if (cellData===0){
                     active_info = '取 消'
+                }else if(cellData===1){
+                    active_info = '激 活'
                 }
-                var active_disable = '';
-                if (rowData.status_info === '已执行'){
-                    active_disable = ' disabled'
+                var active_button = '';
+                if (active_info){
+                    active_button = '<button class="btn btn-success btn-xs" onclick="activeSchedule(\'' + rowData.id + '\')">' + active_info + '</button>'
                 }
                 $(td).html(
-                    '<div class="btn-group">' +
-                        '<button class="btn btn-success btn-xs" onclick="activeSchedule(\'' + cellData.name + '\')"' + active_disable + '>' + active_info + '</button>' +
-                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(\'' + cellData.name + '\')"' + active_disable + '>删 除</button>' +
+                    '<div class="btn-group">' + active_button +
+                        '<button class="btn btn-danger btn-xs" onclick="deleteSchedule(\'' + rowData.id + '\')">删 除</button>' +
                     '</div>'
                 )
             }}
         ],
         ajax_url: '{% url "api-transfer:schedule-list" %}' + '?type=0',
         columns: [
-            {data: "periodic"},
-            {data: "kwargs_dict" },
-            {data: "crontab_info" },
+            {data: "id"},
+            {data: "name"},
+            {data: "command_list" },
+            {data: "run_time" },
             {data: "status_info" },
             {data: "creator"},
             {data: "modify_time"},
             {data: "comment", orderable: false},
-            {data: "periodic", orderable: false}
+            {data: "status", orderable: false}
         ],
         op_html: $('#actions').html()
     };
@@ -96,12 +102,12 @@ $(document).ready(function(){
     initTable();
 });
 
-function activeSchedule(periodic_task_name) {
+function activeSchedule(task_id) {
 
     $.ajax({
-        url: "{% url 'api-ops:periodic_task-active' %}",
+        url: "{% url 'api-transfer:transfer_task-active' %}",
         type: 'POST',
-        data: JSON.stringify({'task_name': periodic_task_name}),
+        data: JSON.stringify({'task_id': task_id}),
         dataType: "json",
         contentType : 'application/json; charset=utf-8',
         {#async: false,#}  // jquery版本太低，取消异步未生效，谁来升个级？
@@ -121,11 +127,11 @@ function activeSchedule(periodic_task_name) {
      });
 }
 
-function deleteSchedule(periodic_task_name) {
+function deleteSchedule(task_id) {
     $.ajax({
-        url: "{% url 'api-ops:periodic_task-delete' %}",
+        url: "{% url 'api-transfer:transfer_task-delete' %}",
         type: 'POST',
-        data: JSON.stringify({'task_name': periodic_task_name}),
+        data: JSON.stringify({'task_id': task_id}),
         dataType: "json",
         contentType : 'application/json; charset=utf-8',
         {#async: false,#} // jquery版本太低，取消异步未生效，谁来升个级？

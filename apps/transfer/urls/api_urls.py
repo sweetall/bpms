@@ -12,6 +12,7 @@ router.register(r'commands', api.CommandViewSet, 'command')
 router.register(r'user_commands', api.UserCommandViewSet, 'user_command')
 
 urlpatterns = [
-
+    path('schedule/active/', api.active_transfer_task, name='transfer_task-active'),
+    path('schedule/delete/', api.delete_transfer_task, name='transfer_task-delete')
 ]
 urlpatterns += router.urls

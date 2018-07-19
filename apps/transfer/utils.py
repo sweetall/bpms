@@ -16,76 +16,39 @@ from .models import TransferSchedule, Database, Table, Command
 
 
 def create_or_update_schedule_task(task):
-    """
-    :param task: {
-        'name': '定时任务001',
-        'task': 'tasks.add', # A registered celery task,
-        'crontab': "30 7 * * *",
-        'args': (16, 16),
-        'kwargs': {},
-        'enabled': False,
-        'schedule': {
-            'type': 0,
-            'comment': '',
-            'user': User,
-        }
-    }
-    :return:
-    """
-    # Todo: check task valid, task and callback must be a celery task
+    print(task)
     try:
-        IntervalSchedule.objects.all().count()
-    except (ProgrammingError, OperationalError):
-        return None
+        schedule = task.get('schedule')
+        schedule_defaults = task['schedule_defaults']
+        command_list = task['command_list']
+        if schedule:
+            schedule.database = schedule_defaults['database']
+            schedule.name = schedule_defaults['name']
+            schedule.run_time = schedule_defaults['run_time']
+            schedule.type = schedule_defaults['type']
+            schedule.comment = schedule_defaults['comment']
+            schedule.modifier = task['user']
+            if task.get('from_schedule'):
+                schedule.from_schedule = task['from_schedule']
+            schedule.save(update_fields=['name', 'run_time', 'type', 'comment'])
 
-    if isinstance(task.get("crontab"), str):
-        try:
-            minute, hour, day, month, week = task["crontab"].split()
-        except ValueError:
-            raise SyntaxError("crontab is not valid")
-        kwargs = dict(
-            minute=minute, hour=hour, day_of_week=week,
-            day_of_month=day, month_of_year=month,
-        )
-        crontab = CrontabSchedule.objects.create(**kwargs)
-    else:
-        raise SyntaxError("TransferSchedule is not valid")
+            schedule.commands.all().delete()
+        else:
+            schedule_defaults.update({'creator': task['user']})
+            schedule = TransferSchedule.objects.create(**schedule_defaults)
 
-    task_defaults = dict(
-        crontab=crontab,
-        name=task['name'],
-        task=task['task'],
-        args=json.dumps(task.get('args', [])),
-        kwargs=json.dumps(task.get('kwargs', {})),
-        enabled=task.get('enabled', True),
-    )
-    periodic_task = PeriodicTask.objects.update_or_create(
-        defaults=task_defaults, name=task['name'],
-    )
-    schedule_defaults = dict(
-        periodic=periodic_task,
-        type=task['schedule'].get('type', 0),
-        comment=task['schedule'].get('comment', '')
-    )
-    try:
-        schedule = TransferSchedule.objects.get(periodic=periodic_task)
-    except TransferSchedule.DoesNotExist:
-        schedule_defaults.update(creator=task['schedule'].get('user'))
-        schedule = TransferSchedule.objects.create(**schedule_defaults)
-    else:
-        schedule.type = schedule_defaults['type']
-        schedule.comment = schedule_defaults['comment']
-        schedule.modifier = task['schedule'].get('user')
-        schedule.save()
-
-    return schedule
+        for command in command_list:
+            command_defaults = {
+                'schedule': schedule,
+                'table': Table.objects.get(id=command[0]),
+                'content': command[1]
+            }
+            Command.objects.create(**command_defaults)
+    except Exception as err:
+        return str(err)
 
 
-def create_task_name(database_id):
-    try:
-        database = Database.objects.get(id=database_id)
-    except Database.DoesNotExist:
-        return
+def create_task_name(database):
     database_name = database.__str__()
     task_name = database_name + timezone.localtime(timezone.now()).strftime('-%Y-%m-%d_%H-%M-%S')
     if not PeriodicTask.objects.filter(name=task_name):
@@ -97,13 +60,9 @@ def create_task_name(database_id):
             return task_name
 
 
-def create_transfer_cmd(database_id, tables_id_list):
-    try:
-        database = Database.objects.get(id=database_id)
-    except Database.DoesNotExist:
-        return []
+def create_transfer_cmd(database, tables_id_list):
     asset = database.label.assets.first()
-    cmd_format = asset.comment
+    cmd_format = asset.cmd_format
     cmd = []
     database_name = database.name
     for table_id in tables_id_list:
@@ -112,10 +71,7 @@ def create_transfer_cmd(database_id, tables_id_list):
         except Table.DoesNotExist:
             break
         table_name = table.name
-        cmd.append(
-            cmd_format.format(
-                db=database_name, table=table_name)
-        )
+        cmd.append((table_id, cmd_format.format(db=database_name, table=table_name)))
     return cmd
 
 
@@ -124,13 +80,13 @@ class ScheduleEditableAccessMixin(AccessMixin):
     def editable(self):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
         schedule = get_object_or_404(TransferSchedule, id=pk)
-        if schedule.periodic.total_run_count > 0:
+        if schedule.run_time < timezone.now() and schedule.status in [2, 3, 4]:
             return False
         return True
 
     def dispatch(self, request, *args, **kwargs):
         schedule_type = self.request.META.get("PATH_INFO").split('/')[-4]
         if not self.editable():
-            messages.error(request, '不可编辑 已执行 的任务！')
+            messages.error(request, '当前任务不可编辑！')
             return HttpResponseRedirect(reverse_lazy('transfer:%s-list' % schedule_type))
         return super().dispatch(request, *args, **kwargs)

@@ -34,7 +34,27 @@ class SSHClient:
 
     def run_cmd(self, cmd):
         _, stdout, stderr = self.client.exec_command(cmd)
-        err = stderr.read().decode()
-        if err:
-            return err
-        return stdout.read().decode()
+        return stdout.read().decode(), stderr.read().decode()
+        # err = stderr.read().decode()
+        # if err:
+        #     return err
+        # return stdout.read().decode()
+
+    def multi_run_cmd(self, cmd_list):
+        if not self.shell:
+            self.shell = self.client.invoke_shell()
+        # result = ''
+        for cmd in cmd_list:
+            self.shell.send(cmd + '\n')
+        # receive_buf = self.shell.recv(1024)
+        # result += receive_buf.decode('utf-8')
+        return
+
+    def get_shell(self):
+        try:
+            self.shell = self.client.invoke_shell()
+        except Exception:
+            try:
+                self.client.close()
+            except Exception:
+                pass

@@ -15,10 +15,10 @@
          </div>
     {% endif %}
     {% csrf_token %}
-    {% bootstrap_field form.name layout="horizontal" %}
+    {% bootstrap_field form.schedule layout="horizontal" %}
     {% bootstrap_field form.database layout="horizontal" %}
     {% bootstrap_field form.tables layout="horizontal" %}
-    {% bootstrap_field form.crontab layout="horizontal" %}
+    {% bootstrap_field form.run_time layout="horizontal" %}
     {% bootstrap_field form.comment layout="horizontal" %}
     <div class="hr-line-dashed"></div>
     <div class="form-group">
@@ -71,7 +71,7 @@
         }
     }
 
-    $('#id_crontab').datetimepicker({
+    $('#id_run_time').datetimepicker({
         autoclose: true,
         todayBtn: true,
         startDate: getNowFormatDate()

@@ -7,6 +7,7 @@
 <table class="table table-striped table-bordered table-hover " id="command_list_table" style="width: 100%">
     <thead>
         <tr>
+            <th class="text-center">ID</th>
             <th class="text-center">任务名</th>
             <th class="text-center">任务类型</th>
             <th class="text-center">命令</th>
@@ -30,26 +31,32 @@ function initTable() {
         ele: $('#command_list_table'),
         columnDefs: [
             {targets: 0, createdCell: function (td, cellData, rowData) {
-                $(td).html(cellData.periodic.name)
-            }},
-            {targets: 1, createdCell: function (td, cellData, rowData) {
-                $(td).html(cellData.type_info)
-            }},
-            {targets: 2, createdCell: function (td, cellData) {
-                $(td).html(cellData.type_info)
-            }},
-            {targets: 3, createdCell: function (td, cellData, rowData) {
-                $(td).html(cellData.crontab_info)
-            }},
-            {targets: 4, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData)
             }},
+            {targets: 1, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData.name)
+            }},
+            {targets: 2, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData.type_info)
+            }},
+            {targets: 3, createdCell: function (td, cellData) {
+                $(td).html(cellData)
+            }},
+            {targets: 4, createdCell: function (td, cellData, rowData) {
+                $(td).html(cellData.run_time.replace(' +0800', ''))
+            }},
             {targets: 5, createdCell: function (td, cellData, rowData) {
+                $(td).html(
+                    '<span class="label label-primary">' + cellData + '</span>'
+                )
+            }},
+            {targets: 6, createdCell: function (td, cellData, rowData) {
                 $(td).html(cellData.creator)
             }}
         ],
         ajax_url: '{% url "api-transfer:user_command-list" %}',
         columns: [
+            {data: "id", orderable:false},
             {data: "schedule", orderable:false},
             {data: "schedule", orderable:false},
             {data: "content" },

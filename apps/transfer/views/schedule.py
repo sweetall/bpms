@@ -79,18 +79,16 @@ class ImportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin,
     def get_context_data(self, **kwargs):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
         schedule = get_object_or_404(TransferSchedule, id=pk)
+        database_id = schedule.database.id
+        tables = [str(item[0]) for item in schedule.commands.values_list('table__id')]
+        run_time = schedule.run_time
         form_default = {}
-        name = schedule.periodic.name
-        database = json.loads(schedule.periodic.kwargs).get('database')
-        tables = json.loads(schedule.periodic.kwargs).get('tables')
-        year = json.loads(schedule.periodic.kwargs).get('year')
-        crontab = schedule.periodic.crontab
+
         comment = schedule.comment
-        form_default["name"] = name
-        form_default["database"] = database
+        form_default["schedule"] = pk
+        form_default["database"] = database_id
         form_default["tables"] = tables
-        form_default['crontab'] = year + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + \
-                                  crontab.hour + ':' + crontab.minute
+        form_default['run_time'] = run_time
         form_default['comment'] = comment
         form = self.get_form_class()(initial=form_default)
 
@@ -98,14 +96,14 @@ class ImportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin,
             'app': _('Transfer'),
             'action': _('Transfer in update'),
             'form': form,
-            'database_id': database,
+            'database_id': database_id,
             'tables': ' '.join(tables),
         }
         kwargs.update(context)
         return super().get_context_data(**kwargs)
 
     def get_success_message(self, cleaned_data):
-        return update_success_msg % ({"name": cleaned_data["name"]})
+        return update_success_msg % ({"name": cleaned_data["schedule"]})
 
 
 class ExportScheduleListView(LoginRequiredMixin, TemplateView):
@@ -170,19 +168,15 @@ class ExportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin,
     def get_context_data(self, **kwargs):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
         schedule = get_object_or_404(TransferSchedule, id=pk)
-        kwargs = json.loads(schedule.periodic.kwargs)
+        from_schedule_id = schedule.from_schedule
         form_default = {}
-        name = schedule.periodic.name
-        from_schedule_id = kwargs.get('from_schedule_id')
-        tables = kwargs.get('tables')
-        year = kwargs.get('year')
-        crontab = schedule.periodic.crontab
+        tables = [str(item[0]) for item in schedule.commands.values_list('table__id')]
+        run_time = schedule.run_time
         comment = schedule.comment
-        form_default["name"] = name
-        form_default["schedule"] = from_schedule_id
+        form_default["schedule"] = pk
+        form_default["from_schedule"] = from_schedule_id
         form_default["tables"] = tables
-        form_default['crontab'] = year + '-' + crontab.month_of_year + '-' + crontab.day_of_month + ' ' + \
-                                  crontab.hour + ':' + crontab.minute
+        form_default['run_time'] = run_time
         form_default['comment'] = comment
         form = self.get_form_class()(initial=form_default)
 
@@ -197,4 +191,4 @@ class ExportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin,
         return super().get_context_data(**kwargs)
 
     def get_success_message(self, cleaned_data):
-        return update_success_msg % ({"name": cleaned_data["name"]})
+        return update_success_msg % ({"name": cleaned_data["schedule"]})
