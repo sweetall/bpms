@@ -16,7 +16,6 @@ from .models import TransferSchedule, Database, Table, Command
 
 
 def create_or_update_schedule_task(task):
-    print(task)
     try:
         schedule = task.get('schedule')
         schedule_defaults = task['schedule_defaults']
@@ -61,8 +60,7 @@ def create_task_name(database):
 
 
 def create_transfer_cmd(database, tables_id_list):
-    asset = database.label.assets.first()
-    cmd_format = asset.cmd_format
+    cmd_format = database.asset.cmd_format
     cmd = []
     database_name = database.name
     for table_id in tables_id_list:

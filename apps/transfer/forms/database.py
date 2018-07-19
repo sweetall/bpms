@@ -3,47 +3,34 @@ from django.utils.translation import gettext_lazy as _
 
 from transfer.models import Database, Table, Field
 from common.utils import get_logger
+from assets.models.asset import Asset
 
 logger = get_logger(__file__)
 __all__ = ['DatabaseCreateForm', 'DatabaseUpdateForm', 'DatabaseBulkUpdateForm']
 
 
 class DatabaseCreateForm(forms.ModelForm):
+    asset = forms.ModelChoiceField(queryset=Asset.objects.filter(labels__value__in=['生产环境', '测试环境']),
+                                   required=True, label='机器', help_text='* required')
+
     class Meta:
         model = Database
-        fields = ['name', 'quota', 'label', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'is_active', 'comment']
-        # widgets = {
-        #     'nodes': forms.SelectMultiple(attrs={
-        #         'class': 'select2', 'data-placeholder': _('Nodes')
-        #     }),
-        #     'admin_user': forms.Select(attrs={
-        #         'class': 'select2', 'data-placeholder': _('Admin user')
-        #     }),
-        #     'labels': forms.SelectMultiple(attrs={
-        #         'class': 'select2', 'data-placeholder': _('Label')
-        #     }),
-        #     'port': forms.TextInput(),
-        #     'domain': forms.Select(attrs={
-        #         'class': 'select2', 'data-placeholder': _('Domain')
-        #     }),
-        # }
-        # labels = {
-        #     'nodes': _("Node"),
-        # }
+        fields = ['name', 'asset', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'is_active', 'comment']
         help_texts = {
             'name': '* required',
-            'quota': '* required',
             'port': '* required',
         }
 
 
 class DatabaseUpdateForm(forms.ModelForm):
+    asset = forms.ModelChoiceField(queryset=Asset.objects.filter(labels__value__in=['生产环境', '测试环境']),
+                                   required=True, label='机器', help_text='* required')
+
     class Meta:
         model = Database
-        fields = ['name', 'quota', 'label', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'is_active', 'comment']
+        fields = ['name', 'asset', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'is_active', 'comment']
         help_texts = {
             'name': '* required',
-            'quota': '* required',
             'port': '* required',
         }
 
@@ -60,10 +47,13 @@ class DatabaseBulkUpdateForm(forms.ModelForm):
         )
     )
 
+    asset = forms.ModelChoiceField(queryset=Asset.objects.filter(labels__value__in=['生产环境', '测试环境']),
+                                   required=True, label='机器')
+
     class Meta:
         model = Database
         fields = [
-            'databases', 'label', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'comment'
+            'databases', 'asset', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'comment'
         ]
 
     def save(self, commit=True):

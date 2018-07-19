@@ -24,7 +24,7 @@
             </th>
             <th class="text-center">库名</th>
             <th class="text-center">配额</th>
-            <th class="text-center">标签</th>
+            <th class="text-center">机器</th>
             <th class="text-center">对应开发</th>
             <th class="text-center">对应运维</th>
             <th class="text-center">对应业务</th>
@@ -115,7 +115,7 @@ function initTable() {
         ],
         ajax_url: '{% url "api-transfer:database-list" %}',
         columns: [
-            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "label_info" }, {data: "dev" }, {data: "opr"},
+            {data: "id"}, {data: "name"}, {data: "quota" }, {data: "asset_info" }, {data: "dev" }, {data: "opr"},
             {data: "bus"}, {data: "user_owner"}, {data: "user_share"}, {data: "is_active", orderable: false },
             {data: "modifier"}, {data: "modify_time"}, {data: "comment", orderable: false}
         ],

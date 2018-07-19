@@ -28,10 +28,10 @@ class TableSerializer(BulkSerializerMixin, serializers.ModelSerializer):
 
 class DatabaseSerializer(BulkSerializerMixin, serializers.ModelSerializer):
     tables = TableSerializer(many=True, read_only=True)
-    label_info = serializers.SerializerMethodField()
+    asset_info = serializers.SerializerMethodField()
 
-    def get_label_info(self, obj):
-        return obj.label_info
+    def get_asset_info(self, obj):
+        return obj.asset_info
 
     class Meta:
         model = Database

@@ -104,6 +104,8 @@ class Asset(models.Model):
     objects = AssetManager()
 
     def __str__(self):
+        if self.labels:
+            return self.labels.first().value + '-' + self.ip
         return '{0.hostname}({0.ip})'.format(self)
 
     @property

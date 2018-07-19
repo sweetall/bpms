@@ -1,7 +1,5 @@
-import json
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django_celery_beat.models import PeriodicTask
 
 from transfer.models import Database, Table, TransferSchedule, Command
 from ..utils import create_or_update_schedule_task, create_task_name, create_transfer_cmd
@@ -18,7 +16,7 @@ __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportSchedu
 
 
 class ImportScheduleCreateForm(forms.Form):
-    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, label__value='生产环境'),
+    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, asset__labels__value='生产环境'),
                                       required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
@@ -32,9 +30,6 @@ class ImportScheduleCreateForm(forms.Form):
     )
     run_time = forms.DateTimeField(label='执行时间 *')
     comment = forms.CharField(widget=forms.Textarea, required=False, label='备注')
-
-    # def clean_run_time(self):
-    #     return datetime.datetime.strptime(self.cleaned_data['run_time'], '%Y-%m-%d %H:%M')
 
     def save(self, request):
         database = self.cleaned_data.get('database')
@@ -57,7 +52,7 @@ class ImportScheduleCreateForm(forms.Form):
 
 class ImportScheduleUpdateForm(forms.Form):
     schedule = forms.CharField(widget=forms.HiddenInput)
-    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, label__value='生产环境'),
+    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, asset__labels__value='测试环境'),
                                       required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,
@@ -113,7 +108,7 @@ class ExportScheduleCreateForm(forms.Form):
 
     def save(self, request):
         from_schedule = self.cleaned_data['from_schedule']
-        database = Database.objects.filter(label__value='测试环境', name=from_schedule.database.name).first()
+        database = Database.objects.filter(asset__labels__value='测试环境', name=from_schedule.database.name).first()
         tables_id_list = self.cleaned_data.get('tables')
         task_name = create_task_name(database)
         task_info = {
@@ -155,7 +150,7 @@ class ExportScheduleUpdateForm(forms.Form):
 
     def save(self, request):
         from_schedule = self.cleaned_data['from_schedule']
-        database = Database.objects.filter(label__value='测试环境', name=from_schedule.database.name).first()
+        database = Database.objects.filter(asset__labels__value='测试环境', name=from_schedule.database.name).first()
         tables_id_list = self.cleaned_data.get('tables')
         task_name = create_task_name(database)
         task_info = {

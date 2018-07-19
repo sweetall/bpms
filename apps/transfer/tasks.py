@@ -2,13 +2,11 @@ from django.core.cache import cache
 from django.conf import settings
 from django.utils import timezone
 from celery import shared_task
-from django_celery_beat.models import PeriodicTask
 
 from common.utils import get_logger
 from common.libs.prmk_client import SSHClient
 from common.tasks import send_mail_async
 from assets.models.asset import Asset
-from assets.models.label import Label
 from .models import Database, Command
 from ops.celery.utils import register_as_period_task, after_app_ready_start, after_app_shutdown_clean
 
@@ -33,9 +31,8 @@ logger = get_logger(__file__)
 @after_app_ready_start
 @after_app_shutdown_clean
 def execute_command():
-    labels = Label.objects.filter(value__in=['生产环境', '测试环境'])
-    for label in labels:
-        asset = label.assets.first()
+    assets = Asset.objects.filter(labels__value__in=['生产环境', '测试环境'])
+    for asset in assets:
         ip = asset.ip
         system_user = asset.systemuser_set.first()
         username = system_user.username
@@ -50,7 +47,7 @@ def execute_command():
                 return False
         sch_num = cache.get('SCHEDULE_NUM_%s' % ip, 0)
         max_con = asset.max_con
-        commands = Command.objects.filter(schedule__database__label=label, status=0,
+        commands = Command.objects.filter(schedule__database__asset=asset, status=0,
                                           schedule__run_time__lte=timezone.now())[:max_con-sch_num]
         ssh.get_shell()
         shell = ssh.shell
@@ -77,9 +74,8 @@ def execute_command():
 @after_app_ready_start
 @after_app_shutdown_clean
 def check_schedule_result():
-    labels = Label.objects.filter(value__in=['生产环境', '测试环境'])
-    for label in labels:
-        asset = label.assets.first()
+    assets = Asset.objects.filter(labels__value__in=['生产环境', '测试环境'])
+    for asset in assets:
         ip = asset.ip
         system_user = asset.systemuser_set.first()
         username = system_user.username
@@ -93,7 +89,7 @@ def check_schedule_result():
         else:
             if not ssh.client_state:
                 return False
-        commands = Command.objects.filter(schedule__database__label=label, status=1)
+        commands = Command.objects.filter(schedule__database__asset=asset, status=1)
         sch_num = cache.get('SCHEDULE_NUM_%s' % ip, 0)
         for command in commands:
             cmd = 'cat %s/%s' % (log_dir+timezone.now().strftime('%Y%m%d'), str(command.id))
@@ -119,10 +115,6 @@ def check_schedule_result():
 
 def get_status(log_info, content):
     return 2
-
-# 1 下发命令 写入标记
-# 2 检查进程 确定执行状态 pa -aux | grep cmd
-# 3 进程消失 + 日志 判断执行结果 删除标记
 
 
 @shared_task

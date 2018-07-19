@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from common.mixins import UserMixin, DateMixin
 from assets.models.label import Label
+from assets.models.asset import Asset
 
 
 # 待补充，与源库字段保持一致
@@ -67,10 +68,11 @@ class Subsystem(models.Model):
 
 class Database(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    label = models.ForeignKey(Label, blank=True, null=True, related_name='databases', on_delete=models.SET_NULL,
-                              verbose_name='标签')
+    # label = models.ForeignKey(Label, blank=True, null=True, related_name='databases', on_delete=models.SET_NULL,
+    #                           verbose_name='标签')
+    asset = models.ForeignKey(Asset, blank=True, null=True, default=None, related_name='databases', on_delete=models.SET_NULL, verbose_name='机器')
     name = models.CharField(max_length=100, verbose_name='库名')
-    quota = models.IntegerField(verbose_name='配额')
+    quota = models.IntegerField(blank=True, null=True, verbose_name='配额')
     is_active = models.BooleanField(default=True, verbose_name='是否可用')
     dev = models.CharField(blank=True, max_length=100, verbose_name='对应开发')
     opr = models.CharField(blank=True, max_length=100, verbose_name='对应运维')
@@ -82,8 +84,8 @@ class Database(models.Model):
     modify_time = models.DateTimeField(blank=True, editable=False, auto_now=True)
 
     @property
-    def label_info(self):
-        return self.label.__str__() if self.label else ''
+    def asset_info(self):
+        return self.asset.__str__() if self.asset else ''
 
     class Meta:
         ordering = ('name', )
@@ -91,7 +93,7 @@ class Database(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.label.value+'-'+self.label.name+'-'+self.name
+        return self.name
 
 
 # class DatabaseInfo(models.Model):
