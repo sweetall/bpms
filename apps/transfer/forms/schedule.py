@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 from transfer.models import Database, Table, TransferSchedule, Command
 from ..utils import create_or_update_schedule_task, create_task_name, create_transfer_cmd
 from common.utils import get_object_or_none
-from assets.models.label import Label
 
 __all__ = ['ImportScheduleCreateForm', 'ImportScheduleUpdateForm', 'ExportScheduleCreateForm',
            'ExportScheduleUpdateForm']
@@ -52,7 +51,7 @@ class ImportScheduleCreateForm(forms.Form):
 
 class ImportScheduleUpdateForm(forms.Form):
     schedule = forms.CharField(widget=forms.HiddenInput)
-    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, asset__labels__value='测试环境'),
+    database = forms.ModelChoiceField(queryset=Database.objects.filter(is_active=True, asset__labels__value='生产环境'),
                                       required=True, label='选择库 *')
     tables = forms.MultipleChoiceField(
         required=True,

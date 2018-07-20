@@ -79,7 +79,7 @@ class ImportScheduleUpdateView(ScheduleEditableAccessMixin, SuccessMessageMixin,
     def get_context_data(self, **kwargs):
         pk = self.request.META.get("PATH_INFO").split('/')[-3]
         schedule = get_object_or_404(TransferSchedule, id=pk)
-        database_id = schedule.database.id
+        database_id = str(schedule.database.id)
         tables = [str(item[0]) for item in schedule.commands.values_list('table__id')]
         run_time = schedule.run_time
         form_default = {}
