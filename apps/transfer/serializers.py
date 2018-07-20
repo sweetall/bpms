@@ -19,6 +19,16 @@ class FieldSerializer(BulkSerializerMixin, serializers.ModelSerializer):
 
 class TableSerializer(BulkSerializerMixin, serializers.ModelSerializer):
     fields = FieldSerializer(many=True, read_only=True)
+    subsystem = serializers.SerializerMethodField()
+    is_partitioned = serializers.SerializerMethodField()
+
+    def get_subsystem(self, obj):
+        if obj.subsystem:
+            return obj.subsystem.en_name_abbr
+        return ''
+
+    def get_is_partitioned(self, obj):
+        return '是' if obj.is_partitioned else '否'
 
     class Meta:
         model = Table
@@ -29,9 +39,13 @@ class TableSerializer(BulkSerializerMixin, serializers.ModelSerializer):
 class DatabaseSerializer(BulkSerializerMixin, serializers.ModelSerializer):
     tables = TableSerializer(many=True, read_only=True)
     asset_info = serializers.SerializerMethodField()
+    asset = serializers.SerializerMethodField()
 
     def get_asset_info(self, obj):
         return obj.asset_info
+
+    def get_asset(self, obj):
+        return obj.asset.ip
 
     class Meta:
         model = Database

@@ -27,6 +27,7 @@ from common.mixins import AdminUserRequiredMixin, JSONResponseMixin
 from transfer.models import Database, Table, Field
 from transfer.forms.database import DatabaseCreateForm, DatabaseUpdateForm, DatabaseBulkUpdateForm, FileForm
 from transfer.serializers import DatabaseSerializer
+from assets.models import Asset
 
 
 class DatabaseListView(LoginRequiredMixin, TemplateView):
@@ -150,10 +151,8 @@ class DatabaseBulkUpdateView(LoginRequiredMixin, ListView):
 class DatabaseExportView(View):
 
     def get(self, request):
-        database_fields = [Database._meta.get_field(name) for name in ('name', 'quota', 'dev', 'opr')]
-        table_fields = [Table._meta.get_field(name) for name in ('name', 'format', 'table_create_time',
-                        'table_update_time', 'is_partitioned', 'partition_field', 'dev', 'opr')]
-        field_fields = [Field._meta.get_field(name) for name in ('name', 'type', 'is_sensitive')]
+        database_fields = [Database._meta.get_field(name) for name in ('name', 'asset', 'dev', 'opr', 'bus',
+                                                                       'user_owner', 'user_share', 'comment')]
 
         spm = request.GET.get('spm', '')
         databases_id = cache.get(spm, [])
@@ -166,26 +165,12 @@ class DatabaseExportView(View):
         databases = DatabaseSerializer(instance=Database.objects.filter(id__in=databases_id), many=True).data
         writer = csv.writer(response, dialect='excel', quoting=csv.QUOTE_MINIMAL)
 
-        header = [field.verbose_name for field in database_fields] + [field.verbose_name for field in table_fields] + \
-                 [field.verbose_name for field in field_fields]
+        header = [field.verbose_name for field in database_fields]
         writer.writerow(header)
 
         for database in databases:
             database_data = [database[field.name] for field in database_fields]
-            if not database['tables']:
-                data = database_data
-                writer.writerow(data)
-                continue
-            for table in database['tables']:
-                table_data = [table[field.name] for field in table_fields]
-                if not table['fields']:
-                    data = database_data + table_data
-                    writer.writerow(data)
-                    continue
-                for field_ in table['fields']:
-                    field_data = [field_[field.name] for field in field_fields]
-                    data = database_data + table_data + field_data
-                    writer.writerow(data)
+            writer.writerow(database_data)
         return response
 
     def post(self, request):
@@ -223,59 +208,35 @@ class DatabaseBulkImportView(AdminUserRequiredMixin, JSONResponseMixin, FormView
         reader = csv.reader(csv_file)
         csv_data = [row for row in reader]
         # header_ = csv_data[0]
-        database_fields = ['name', 'quota', 'dev', 'opr']
-        table_fields = ['name', 'format', 'table_create_time', 'table_update_time', 'is_partitioned',
-                        'partition_field', 'dev', 'opr']
-        field_fields = ['name', 'type', 'is_sensitive']
+        database_fields = ['name', 'asset', 'dev', 'opr', 'bus', 'user_owner', 'user_share', 'comment']
 
-        created = {'database': [], 'table': [], 'field': []}
+        created = []
         # updated = {'database': [], 'table': [], 'field': []}
         # failed = {'database': [], 'table': [], 'field': []}
         for row in csv_data[1:]:
             if set(row) == {''}:
                 continue
-            elif len(row) < len(database_fields)+len(table_fields)+len(field_fields):
-                row.extend(['']*(len(database_fields)+len(table_fields)+len(field_fields)-len(row)))
+            elif len(row) < len(database_fields):
+                row.extend(['']*(len(database_fields)-len(row)))
             database_dict = dict(zip(database_fields, row[:len(database_fields)]))
-            table_dict = dict(zip(table_fields, row[len(database_fields):len(database_fields)+len(table_fields)]))
-            field_dict = dict(zip(field_fields, row[-len(field_fields):]))
-            database_dict.update({'modifier': self.request.user.username or 'Admin'})
-            table_dict.update({'modifier': self.request.user.username or 'Admin',
-                               'is_partitioned': True if table_dict['is_partitioned'].lower() == 'true' else False})
-            field_dict.update({'modifier': self.request.user.username or 'Admin',
-                               'is_sensitive': True if field_dict['is_sensitive'].lower() == 'true' else False})
+            database_dict.update({'modifier': self.request.user.username or 'Admin',
+                                  'asset': get_object_or_none(Asset, ip=database_dict['asset'])})
 
             if not database_dict['name']:
                 continue
-            database, _created = Database.objects.update_or_create(name=database_dict['name'], defaults=database_dict)
+            database, _created = Database.objects.update_or_create(name=database_dict['name'],
+                                                                   asset=database_dict['asset'], defaults=database_dict)
             if _created:
-                created['database'].append(database_dict['name'])
-
-            if not table_dict['name']: continue
-            table_dict.update({'database': database})
-            table, _created = Table.objects.update_or_create(database=database, name=table_dict['name'],
-                                                             defaults=table_dict)
-            if _created:
-                created['table'].append(table_dict['name'])
-
-            if not field_dict['name']: continue
-            field_dict.update({'table': table})
-            field, _created = Field.objects.update_or_create(table=table, name=field_dict['name'], defaults=field_dict)
-            if _created:
-                created['field'].append(field_dict['name'])
+                created.append(database_dict['name'])
 
         data = {
             'created': '\n'.join([(item + ': ' + ','.join(created[item])) for item in created]),
-            'created_info': 'Created database:{} table:{} field:{}'.format(len(created['database']),
-                                                                           len(created['table']),
-                                                                           len(created['field'])),
+            'created_info': 'Created database:{}'.format(len(created)),
             # 'updated': updated,
             # 'updated_info': 'Updated {}'.format(len(updated)),
             # 'failed': failed,
             # 'failed_info': 'Failed {}'.format(len(failed)),
             'valid': True,
-            'msg': 'Created database:{} table:{} field:{}'.format(len(created['database']),
-                                                                  len(created['table']),
-                                                                  len(created['field'])),
+            'msg': 'Created database:{}'.format(len(created)),
         }
         return self.render_json_response(data)

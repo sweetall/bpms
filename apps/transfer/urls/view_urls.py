@@ -28,6 +28,9 @@ urlpatterns = [
     path('database/export/', database.DatabaseExportView.as_view(), name='database-export'),
     path('database/import/', database.DatabaseBulkImportView.as_view(), name='database-import'),
 
+    path('table/export/', table.TableExportView.as_view(), name='table-export'),
+    path('table/import/', table.TableBulkImportView.as_view(), name='table-import'),
+
     path('schedule-import/', schedule.ImportScheduleListView.as_view(), name='schedule-import-list'),
     path('schedule-import/create/', schedule.ImportScheduleCreateView.as_view(), name='schedule-import-create'),
     path('schedule-import/<str:pk>/update/', schedule.ImportScheduleUpdateView.as_view(), name='schedule-import-update'),

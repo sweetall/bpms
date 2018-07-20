@@ -6,7 +6,7 @@ from common.utils import get_logger
 from assets.models.asset import Asset
 
 logger = get_logger(__file__)
-__all__ = ['DatabaseCreateForm', 'DatabaseUpdateForm', 'DatabaseBulkUpdateForm']
+__all__ = ['DatabaseCreateForm', 'DatabaseUpdateForm', 'DatabaseBulkUpdateForm', 'FileForm']
 
 
 class DatabaseCreateForm(forms.ModelForm):

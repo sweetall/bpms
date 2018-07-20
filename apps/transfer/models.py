@@ -93,6 +93,8 @@ class Database(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
+        if self.asset:
+            return self.asset.__str__() + '-' + self.name
         return self.name
 
 

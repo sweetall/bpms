@@ -1,19 +1,31 @@
 import datetime
+import codecs
+import csv
+import json
+import uuid
+import chardet
+from io import StringIO
 from django.views.generic import TemplateView, ListView
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
-from django.urls import reverse_lazy
+from django.utils import timezone
 from django.shortcuts import redirect, reverse
+from django.core.cache import cache
+from django.views import View
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.http import HttpResponse, JsonResponse
 
 from common.utils import get_object_or_none, get_logger, is_uuid
 from common.const import create_success_msg, update_success_msg
-from common.mixins import AdminUserRequiredMixin
-from transfer.models import Database, Table, Field
-from transfer.forms.table import TableCreateForm, TableUpdateForm, TableBulkUpdateForm
+from common.mixins import AdminUserRequiredMixin, JSONResponseMixin
+from transfer.models import Database, Table, Field, Subsystem
+from transfer.forms.table import TableCreateForm, TableUpdateForm, TableBulkUpdateForm, FileForm
+from transfer.serializers import TableSerializer
 
 
 class TableListView(LoginRequiredMixin, TemplateView):
@@ -172,3 +184,106 @@ class TableBulkUpdateView(LoginRequiredMixin, ListView):
         return super().get_context_data(**kwargs)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class TableExportView(View):
+
+    def get(self, request):
+
+        table_fields = [Table._meta.get_field(name) for name in ('name', 'format', 'is_partitioned', 'partition_field',
+                                                                 'table_create_time', 'table_update_time', 'subsystem',
+                                                                 'dev', 'opr', 'bus', 'comment')]
+
+        spm = request.GET.get('spm', '')
+        tables_id = cache.get(spm, [])
+        filename = 'tables-{}.csv'.format(
+            timezone.localtime(timezone.now()).strftime('%Y-%m-%d_%H-%M-%S')
+        )
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        response.write(codecs.BOM_UTF8)
+        tables = TableSerializer(instance=Table.objects.filter(id__in=tables_id), many=True).data
+        writer = csv.writer(response, dialect='excel', quoting=csv.QUOTE_MINIMAL)
+
+        header = [field.verbose_name for field in table_fields]
+        writer.writerow(header)
+
+        for table in tables:
+            table_data = [table[field.name] for field in table_fields]
+            writer.writerow(table_data)
+        return response
+
+    def post(self, request):
+        try:
+            tables_id = json.loads(request.body).get('tables_id', [])
+        except ValueError:
+            return HttpResponse('Json object not valid', status=400)
+        spm = uuid.uuid4().hex
+        cache.set(spm, tables_id, 300)
+        url = reverse('transfer:table-export') + '?spm=%s' % spm
+        return JsonResponse({'redirect': url})
+
+
+class TableBulkImportView(AdminUserRequiredMixin, JSONResponseMixin, FormView):
+    form_class = FileForm
+
+    def form_invalid(self, form):
+        try:
+            error = form.errors.values()[-1][-1]
+        except Exception as e:
+            error = _('Invalid file.')
+        data = {
+            'success': False,
+            'msg': error
+        }
+        return self.render_json_response(data)
+
+    # todo: need be patch, method to long
+    def form_valid(self, form):
+        database_id = self.request.GET.get('database_id')
+        if not get_object_or_none(Database, id=database_id):
+            messages.error(self.request, '未制定Database！')
+            return
+        f = form.cleaned_data['file']
+        det_result = chardet.detect(f.read())
+        f.seek(0)  # reset file seek index
+        data = f.read().decode(det_result['encoding']).strip(codecs.BOM_UTF8.decode())
+        csv_file = StringIO(data)
+        reader = csv.reader(csv_file)
+        csv_data = [row for row in reader]
+        # header_ = csv_data[0]
+        table_fields = ['name', 'format', 'is_partitioned', 'partition_field', 'table_create_time', 'table_update_time',
+                        'subsystem', 'dev', 'opr', 'bus', 'comment']
+
+        created = []
+        # updated = {'table': [], 'table': [], 'field': []}
+        # failed = {'table': [], 'table': [], 'field': []}
+        for row in csv_data[1:]:
+            if set(row) == {''}:
+                continue
+            elif len(row) < len(table_fields):
+                row.extend(['']*(len(table_fields)-len(row)))
+            table_dict = dict(zip(table_fields, row[:len(table_fields)]))
+            table_dict.update({
+                'modifier': self.request.user.username or 'Admin',
+                'subsystem': get_object_or_none(Subsystem, en_name_abbr=table_dict['subsystem']),
+                'is_partitioned': True if table_dict['is_partitioned'].strip() == '是' else False
+            })
+
+            if not table_dict['name']:
+                continue
+            table, _created = Table.objects.update_or_create(database_id=database_id, name=table_dict['name'],
+                                                             defaults=table_dict)
+            if _created:
+                created.append(table_dict['name'])
+
+        data = {
+            'created': '\n'.join([(item + ': ' + ','.join(created[item])) for item in created]),
+            'created_info': 'Created table:{}'.format(len(created)),
+            # 'updated': updated,
+            # 'updated_info': 'Updated {}'.format(len(updated)),
+            # 'failed': failed,
+            # 'failed_info': 'Failed {}'.format(len(failed)),
+            'valid': True,
+            'msg': 'Created table:{}'.format(len(created)),
+        }
+        return self.render_json_response(data)

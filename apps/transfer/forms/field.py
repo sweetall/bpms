@@ -5,7 +5,7 @@ from transfer.models import Database, Table, Field
 from common.utils import get_logger
 
 logger = get_logger(__file__)
-__all__ = ['FieldCreateForm', 'FieldUpdateForm', 'FieldBulkUpdateForm']
+__all__ = ['FieldCreateForm', 'FieldUpdateForm', 'FieldBulkUpdateForm', 'FileForm']
 
 
 class FieldCreateForm(forms.ModelForm):
@@ -91,3 +91,7 @@ class FieldBulkUpdateForm(forms.ModelForm):
         fields = Field.objects.filter(id__in=[asset.id for asset in fields])
         fields.update(**cleaned_data)
         return fields
+
+
+class FileForm(forms.Form):
+    file = forms.FileField()
