@@ -45,7 +45,9 @@ class DatabaseSerializer(BulkSerializerMixin, serializers.ModelSerializer):
         return obj.asset_info
 
     def get_asset(self, obj):
-        return obj.asset.ip
+        if obj.asset:
+            return obj.asset.ip
+        return ''
 
     class Meta:
         model = Database

@@ -230,7 +230,7 @@ class DatabaseBulkImportView(AdminUserRequiredMixin, JSONResponseMixin, FormView
                 created.append(database_dict['name'])
 
         data = {
-            'created': '\n'.join([(item + ': ' + ','.join(created[item])) for item in created]),
+            'created': '\n'.join([(item + ': ' + ','.join(created)) for item in created]),
             'created_info': 'Created database:{}'.format(len(created)),
             # 'updated': updated,
             # 'updated_info': 'Updated {}'.format(len(updated)),
